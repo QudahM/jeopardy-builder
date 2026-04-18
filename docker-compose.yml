@@ -1,0 +1,35 @@
+
+services:
+  db:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_USER: jeopardy_user
+      POSTGRES_PASSWORD: jeopardy_password
+      POSTGRES_DB: jeopardy_db
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+
+  backend:
+    build: ./backend
+    environment:
+      DB_HOST: db
+      DB_USER: jeopardy_user
+      DB_PASSWORD: jeopardy_password
+      DB_NAME: jeopardy_db
+      DB_PORT: "5432"
+    ports:
+      - "8080:8080"
+    depends_on:
+      - db
+
+  frontend:
+    build: ./frontend
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+
+volumes:
+  postgres_data:
