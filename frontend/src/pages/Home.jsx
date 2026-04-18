@@ -1,92 +1,60 @@
-import { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
-import { Play, Plus, Trash2 } from 'lucide-react';
-import { getGames, deleteGame } from '../api/client';
+import React from 'react';
+import { useNavigate } from 'react-router-dom';
+import { Play } from 'lucide-react';
 
 export default function Home() {
-  const [games, setGames] = useState([]);
-
-  useEffect(() => {
-    let mounted = true;
-    const loadGames = async () => {
-      const data = await getGames();
-      if (mounted) {
-        setGames(data || []);
-      }
-    };
-    loadGames();
-    return () => { mounted = false; };
-  }, []);
-
-  const handleDelete = async (id) => {
-    if (confirm('Are you sure you want to delete this game?')) {
-      await deleteGame(id);
-      const data = await getGames();
-      setGames(data || []);
-    }
-  };
+  const navigate = useNavigate();
 
   return (
-    <div className="container mx-auto px-4 py-12">
-      <header className="flex justify-between items-center mb-12">
-        <h1 className="text-5xl font-extrabold tracking-tight text-transparent bg-clip-text bg-linear-to-r from-jeopardy-gold to-yellow-200 drop-shadow-sm">
-          JEOPARDY! <span className="text-2xl font-normal text-white">Creator</span>
-        </h1>
-        <Link
-          to="/create"
-          className="flex items-center gap-2 bg-jeopardy-gold text-jeopardy-dark px-6 py-3 rounded-full font-bold hover:bg-yellow-400 transition-all transform hover:scale-105 shadow-lg shadow-jeopardy-gold/20"
-        >
-          <Plus size={20} />
-          Create Game
-        </Link>
-      </header>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {games.map((game) => (
-          <div
-            key={game.id}
-            className="group relative bg-jeopardy-blue/20 backdrop-blur-md rounded-2xl p-6 border border-jeopardy-gold/30 hover:border-jeopardy-gold transition-all duration-300 shadow-xl"
-          >
-            <h2 className="text-2xl font-bold mb-2 text-white">{game.title}</h2>
-            <div className="text-gray-300 text-sm mb-6 flex flex-col gap-1">
-              <span>{game.num_categories} Categories</span>
-              <span>{game.questions_per_category} Questions each</span>
-              <span>Base Value: ${game.base_point_value}</span>
-            </div>
-
-            <div className="flex justify-between items-center mt-auto">
-              <Link
-                to={`/setup/${game.id}`}
-                className="flex items-center gap-2 bg-jeopardy-blue hover:bg-blue-600 text-white px-5 py-2 rounded-lg font-semibold transition-colors"
-              >
-                <Play size={18} />
-                Play Now
-              </Link>
-              <button
-                onClick={() => handleDelete(game.id)}
-                className="text-red-400 hover:text-red-300 p-2 rounded-lg hover:bg-red-400/10 transition-colors"
-                title="Delete Game"
-              >
-                <Trash2 size={20} />
-              </button>
-            </div>
-          </div>
-        ))}
-
-        {games.length === 0 && (
-          <div className="col-span-full text-center py-24 bg-jeopardy-blue/10 rounded-3xl border border-dashed border-jeopardy-blue/50">
-            <h3 className="text-2xl font-medium text-gray-300 mb-4">No games created yet!</h3>
-            <p className="text-gray-500 mb-6">Create your first custom Jeopardy board to get started.</p>
-            <Link
-              to="/create"
-              className="inline-flex items-center gap-2 bg-jeopardy-gold text-jeopardy-dark px-6 py-3 rounded-full font-bold hover:bg-yellow-400 transition-colors"
-            >
-              <Plus size={20} />
-              Create Game
-            </Link>
-          </div>
-        )}
+    <div className="relative min-h-screen flex flex-col items-center justify-center overflow-hidden bg-jeopardy-dark">
+      {/* Dynamic Background Elements */}
+      <div className="absolute inset-0 z-0">
+        <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-jeopardy-blue/20 blur-[120px] rounded-full animate-pulse" />
+        <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-jeopardy-gold/10 blur-[120px] rounded-full animate-pulse" style={{ animationDelay: '2s' }} />
       </div>
+
+      {/* Content Container */}
+      <div className="relative z-10 flex flex-col items-center text-center px-4 max-w-4xl">
+        {/* Decorative Grid Lines (Jeopardy Style) */}
+        <div className="absolute -top-24 -left-24 w-48 h-48 border border-jeopardy-gold/10 grid grid-cols-3 grid-rows-3 opacity-20">
+            {Array.from({ length: 9 }).map((_, i) => <div key={i} className="border border-jeopardy-gold/20" />)}
+        </div>
+
+        <div className="mb-8 p-1 px-3 rounded-full bg-white/5 border border-white/10 backdrop-blur-md text-jeopardy-gold text-xs font-bold tracking-[0.3em] uppercase animate-in fade-in slide-in-from-top duration-1000">
+          The Ultimate Trivia Builder
+        </div>
+
+        <h1 className="text-7xl md:text-9xl font-black mb-6 tracking-tighter animate-in zoom-in duration-700">
+          <span className="text-transparent bg-clip-text bg-linear-to-b from-white via-jeopardy-gold to-yellow-600 drop-shadow-[0_10px_10px_rgba(0,0,0,0.5)]">
+            JEOPARDY!
+          </span>
+        </h1>
+
+        <p className="text-xl md:text-2xl text-gray-400 mb-12 font-medium max-w-2xl leading-relaxed animate-in fade-in slide-in-from-bottom duration-1000 delay-300">
+          Create, customize, and host your own professional trivia sessions with stunning visuals and real-time score tracking.
+        </p>
+
+        <div className="flex flex-col md:flex-row gap-6 animate-in fade-in slide-in-from-bottom duration-1000 delay-500">
+          <button 
+            onClick={() => navigate('/dashboard')}
+            className="group relative flex items-center gap-3 bg-jeopardy-gold text-jeopardy-dark px-10 py-5 rounded-2xl font-black text-xl hover:bg-yellow-400 transition-all hover:scale-105 active:scale-95 shadow-[0_0_40px_rgba(255,204,0,0.3)] hover:shadow-[0_0_60px_rgba(255,204,0,0.5)]"
+          >
+            <Play className="fill-jeopardy-dark group-hover:translate-x-1 transition-transform" />
+            ENTER ARENA
+          </button>
+        </div>
+
+        {/* Board Preview Hint */}
+        <div className="mt-20 grid grid-cols-4 gap-2 opacity-30 animate-in fade-in duration-1000 delay-1000">
+            {Array.from({ length: 4 }).map((_, i) => (
+                <div key={i} className="w-12 h-16 bg-jeopardy-blue border-2 border-black rounded-sm shadow-inner" />
+            ))}
+        </div>
+      </div>
+
+      <footer className="absolute bottom-8 left-0 right-0 text-center text-gray-600 text-sm tracking-widest uppercase">
+        Built for competition &bull; Driven by curiosity
+      </footer>
     </div>
   );
 }

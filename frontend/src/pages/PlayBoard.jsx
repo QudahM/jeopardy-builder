@@ -131,7 +131,7 @@ export default function PlayBoard() {
 
       {/* FOOTER : SCOREBOARD */}
       <footer className="relative z-50 h-40 bg-black flex space-x-[2px] border-t-4 border-jeopardy-gold/40">
-        {contestants.map((c) => (
+        {[...contestants].sort((a, b) => a.id - b.id).map((c) => (
           <div key={c.id} className="flex-1 flex flex-col items-center justify-between py-2 border-x border-gray-800 relative bg-linear-to-t from-gray-900 to-black">
              <div className="text-gray-300 font-bold uppercase tracking-wider text-xl mt-2 truncate w-full text-center px-2">{c.name}</div>
              <div className="font-extrabold text-5xl lg:text-6xl mb-2 text-white" style={{ textShadow: '0 0 10px rgba(255,255,255,0.3)' }}>
@@ -140,19 +140,24 @@ export default function PlayBoard() {
              
              {/* Score Controls Overlay during Active Question */}
              {activeQuestion && (
-               <div className="absolute inset-0 bg-black/80 backdrop-blur-sm flex flex-col items-center justify-center gap-3 animate-in fade-in z-10">
-                 <button 
-                  onClick={() => alterScore(c.id, pointValue)}
-                  className="bg-green-600 hover:bg-green-500 text-white font-black px-6 py-2 rounded-full shadow-[0_0_15px_rgba(0,255,0,0.4)] transition-all active:scale-95"
-                 >
-                   + ${pointValue}
-                 </button>
-                 <button 
-                  onClick={() => alterScore(c.id, -pointValue)}
-                  className="bg-red-600 hover:bg-red-500 text-white font-black px-6 py-2 rounded-full shadow-[0_0_15px_rgba(255,0,0,0.4)] transition-all active:scale-95"
-                 >
-                   - ${pointValue}
-                 </button>
+               <div className="absolute inset-0 bg-black/90 backdrop-blur-md flex flex-col items-center justify-between p-3 z-20">
+                 <div className="w-full text-center shrink-0">
+                   <div className="text-white font-black text-xl lg:text-2xl uppercase tracking-widest drop-shadow-[0_2px_2px_rgba(0,0,0,0.8)]">{c.name}</div>
+                 </div>
+                 <div className="flex w-full gap-3 justify-center items-center pb-1">
+                   <button 
+                    onClick={() => alterScore(c.id, pointValue)}
+                    className="flex-1 bg-green-600 hover:bg-green-500 text-white font-black py-3 rounded-lg shadow-[0_0_15px_rgba(0,255,0,0.4)] transition-all active:scale-95 text-lg lg:text-xl border border-green-400/30"
+                   >
+                     +${pointValue}
+                   </button>
+                   <button 
+                    onClick={() => alterScore(c.id, -pointValue)}
+                    className="flex-1 bg-red-600 hover:bg-red-500 text-white font-black py-3 rounded-lg shadow-[0_0_15px_rgba(255,0,0,0.4)] transition-all active:scale-95 text-lg lg:text-xl border border-red-400/30"
+                   >
+                     -${pointValue}
+                   </button>
+                 </div>
                </div>
              )}
           </div>
