@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Home, X } from 'lucide-react';
+
 import { getSession, updateScore, markQuestion } from '../api/client';
 
 export default function PlayBoard() {
@@ -174,10 +175,41 @@ export default function PlayBoard() {
             <X size={48} />
           </button>
           
-          <div className="flex-1 w-full flex flex-col items-center justify-center max-w-6xl text-center">
-            <h2 className="text-6xl md:text-8xl font-bold uppercase text-white tracking-wide" style={{ textShadow: '4px 4px 0 #000' }}>
-              {showAnswer ? activeQuestion.answer : activeQuestion.clue}
-            </h2>
+          <div className="flex-1 w-full flex flex-col items-center justify-center max-w-6xl text-center gap-8">
+            {!showAnswer && activeQuestion.media_type && activeQuestion.media_type !== 'none' && activeQuestion.media_url && (
+              <div className="flex justify-center items-center w-full max-h-[40vh]">
+                {activeQuestion.media_type === 'image' && (
+                  <img src={activeQuestion.media_url?.startsWith('/') ? `${window.location.origin}${activeQuestion.media_url}` : activeQuestion.media_url} referrerPolicy="no-referrer" alt="Clue Media" className="max-h-[40vh] max-w-full rounded-2xl shadow-2xl border-4 border-jeopardy-gold/40 object-contain" />
+                )}
+                {activeQuestion.media_type === 'video' && (
+                  <div className="max-h-[40vh] max-w-full rounded-2xl overflow-hidden shadow-2xl border-4 border-jeopardy-gold/40 bg-black flex justify-center items-center">
+                    <video
+                      src={activeQuestion.media_url?.startsWith('/') ? `${window.location.origin}${activeQuestion.media_url}` : activeQuestion.media_url}
+                      autoPlay
+                      controls
+                      playsInline
+                      style={{ maxWidth: '100%', maxHeight: '40vh' }}
+                    />
+                  </div>
+                )}
+                {activeQuestion.media_type === 'audio' && (
+                  <div className="w-full max-w-2xl bg-black/50 p-2 rounded-xl border-2 border-jeopardy-gold/40">
+                    <audio
+                      src={activeQuestion.media_url?.startsWith('/') ? `${window.location.origin}${activeQuestion.media_url}` : activeQuestion.media_url}
+                      autoPlay
+                      controls
+                      style={{ width: '100%' }}
+                    />
+                  </div>
+                )}
+              </div>
+            )}
+            
+            {(!activeQuestion.media_type || activeQuestion.media_type === 'none' || activeQuestion.clue || showAnswer) && (
+              <h2 className={`${!showAnswer && activeQuestion.media_type && activeQuestion.media_type !== 'none' ? 'text-4xl md:text-5xl' : 'text-6xl md:text-8xl'} font-bold uppercase text-white tracking-wide`} style={{ textShadow: '4px 4px 0 #000' }}>
+                {showAnswer ? activeQuestion.answer : activeQuestion.clue}
+              </h2>
+            )}
           </div>
 
           <div className="mt-8 space-y-4">

@@ -29,6 +29,8 @@ type Question struct {
 	Tier       int    `json:"tier"` // Row index (0, 1, 2...)
 	PointValue int    `json:"point_value"`
 	Clue       string `json:"clue"`
+	MediaType  string `json:"media_type"` // none, image, audio, video
+	MediaURL   string `json:"media_url"`
 	Answer     string `json:"answer"`
 }
 

@@ -1,10 +1,11 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Save, ArrowLeft, Plus, Settings } from 'lucide-react';
-import { createGame } from '../api/client';
+import { createGame, uploadMedia } from '../api/client';
 
 export default function GameBuilder() {
   const navigate = useNavigate();
+  const [isUploading, setIsUploading] = useState(false);
   const [config, setConfig] = useState({
     title: 'New Game',
     num_categories: 6,
@@ -20,6 +21,9 @@ export default function GameBuilder() {
         tier: j,
         point_value: (j + 1) * config.base_point_value,
         clue: '',
+        media_type: 'none',
+        media_url: '',
+        media_file: null,
         answer: '',
       })),
     }))
@@ -44,6 +48,9 @@ export default function GameBuilder() {
             tier: j,
             point_value: (j + 1) * (name === 'base_point_value' ? numValue : config.base_point_value),
             clue: '',
+            media_type: 'none',
+            media_url: '',
+            media_file: null,
             answer: '',
           })),
         }))
@@ -74,18 +81,48 @@ export default function GameBuilder() {
     setCategories(newCats);
   };
 
+  const getAcceptTypes = (mediaType) => {
+    switch (mediaType) {
+      case 'image': return '.jpeg,.jpg,.png,.gif,.svg,.webp';
+      case 'video': return '.mp4,.mov,.mkv,.avi,.webm';
+      case 'audio': return '.mp3,.aac,.wav,.flac,.m4a';
+      default: return '';
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setIsUploading(true);
     try {
+      const payloadCats = [...categories];
+
+      // Upload all files before finalizing the payload
+      for (let i = 0; i < payloadCats.length; i++) {
+        for (let j = 0; j < payloadCats[i].questions.length; j++) {
+          let q = payloadCats[i].questions[j];
+          if (q.media_type !== 'none' && q.media_file) {
+            const result = await uploadMedia(q.media_file);
+            q.media_url = result.url;
+          } else if (q.media_type !== 'none' && !q.media_url) {
+            // Revert to none if no file was uploaded
+            q.media_type = 'none';
+          }
+          // Remove internal file reference before sending to backend
+          delete q.media_file;
+        }
+      }
+
       const payload = {
         ...config,
-        categories
+        categories: payloadCats
       };
       await createGame(payload);
       navigate('/');
     } catch (err) {
       alert('Error creating game');
       console.error(err);
+    } finally {
+      setIsUploading(false);
     }
   };
 
@@ -186,13 +223,35 @@ export default function GameBuilder() {
                       </div>
                       <div className="space-y-3 mt-2">
                         <div>
-                          <label className="text-xs text-blue-300 font-semibold uppercase tracking-wider block mb-1">Clue</label>
+                          <div className="flex justify-between items-center mb-1">
+                            <label className="text-xs text-blue-300 font-semibold uppercase tracking-wider block">Clue</label>
+                            <select
+                              value={q.media_type || 'none'}
+                              onChange={(e) => handleQuestionChange(catIdx, qIdx, 'media_type', e.target.value)}
+                              className="bg-black/50 border border-white/10 rounded px-2 py-1 text-xs text-white focus:outline-none focus:border-jeopardy-gold"
+                            >
+                              <option value="none">Text Only</option>
+                              <option value="image">Image</option>
+                              <option value="audio">Audio</option>
+                              <option value="video">Video</option>
+                            </select>
+                          </div>
+                          {(q.media_type && q.media_type !== 'none') && (
+                            <div className="mb-2">
+                              <input
+                                type="file"
+                                accept={getAcceptTypes(q.media_type)}
+                                onChange={(e) => handleQuestionChange(catIdx, qIdx, 'media_file', e.target.files[0])}
+                                className="w-full bg-white/5 rounded-lg p-2 text-sm text-white focus:outline-none focus:border focus:border-jeopardy-gold block file:mr-4 file:py-1 file:px-3 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-jeopardy-gold file:text-jeopardy-dark hover:file:bg-yellow-400"
+                              />
+                            </div>
+                          )}
                           <textarea
                             value={q.clue}
                             onChange={(e) => handleQuestionChange(catIdx, qIdx, 'clue', e.target.value)}
                             className="w-full bg-white/5 rounded-lg p-2 text-sm text-white resize-none h-20 focus:outline-none focus:border focus:border-jeopardy-gold"
-                            placeholder="Enter the clue..."
-                            required
+                            placeholder="Enter the clue text..."
+                            required={!q.media_type || q.media_type === 'none'}
                           />
                         </div>
                         <div>
@@ -218,10 +277,11 @@ export default function GameBuilder() {
         <div className="fixed bottom-0 left-0 right-0 bg-jeopardy-dark/90 backdrop-blur-md p-4 border-t border-white/10 flex justify-center z-50">
           <button
             type="submit"
-            className="flex items-center gap-2 bg-jeopardy-gold text-jeopardy-dark px-12 py-4 rounded-full font-extrabold text-lg hover:bg-yellow-400 transition-all transform hover:scale-105 shadow-xl shadow-jeopardy-gold/20"
+            disabled={isUploading}
+            className="flex items-center gap-2 bg-jeopardy-gold text-jeopardy-dark px-12 py-4 rounded-full font-extrabold text-lg transition-all transform hover:-translate-y-1 shadow-xl shadow-jeopardy-gold/20 disabled:opacity-75 disabled:cursor-not-allowed disabled:hover:translate-y-0"
           >
-            <Save size={24} />
-            Save Game Configuration
+            <Save size={24} className={isUploading ? "animate-pulse" : ""} />
+            {isUploading ? 'Uploading Media & Saving...' : 'Save Game Configuration'}
           </button>
         </div>
       </form>

@@ -50,6 +50,11 @@ func CreateGame(c *gin.Context) {
 // DeleteGame removes a game
 func DeleteGame(c *gin.Context) {
 	id := c.Param("id")
+
+	// Delete associated play sessions to satisfy foreign key constraints
+	database.DB.Where("game_id = ?", id).Delete(&models.PlaySession{})
+
+	// Now delete the game
 	if err := database.DB.Delete(&models.Game{}, id).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return

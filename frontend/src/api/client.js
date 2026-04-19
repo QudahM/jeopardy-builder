@@ -4,6 +4,15 @@ const api = axios.create({
   baseURL: import.meta.env.VITE_API_BASE_URL || '/api',
 });
 
+// Media API
+export const uploadMedia = (file) => {
+  const formData = new FormData();
+  formData.append('file', file);
+  return api.post('/upload', formData, {
+    headers: { 'Content-Type': 'multipart/form-data' }
+  }).then(res => res.data);
+};
+
 // Game API
 export const getGames = () => api.get('/games').then(res => res.data);
 export const getGame = (id) => api.get(`/games/${id}`).then(res => res.data);

@@ -13,12 +13,17 @@ COPY --from=builder /app/dist /usr/share/nginx/html
 RUN echo 'server { \
     listen 80; \
     server_name localhost; \
+    client_max_body_size 500M; \
     location / { \
         root /usr/share/nginx/html; \
         index index.html index.htm; \
         try_files $uri $uri/ /index.html; \
+        add_header Cache-Control "no-cache, no-store, must-revalidate"; \
     } \
     location /api/ { \
+        proxy_pass http://backend:8080; \
+    } \
+    location /uploads/ { \
         proxy_pass http://backend:8080; \
     } \
 }' > /etc/nginx/conf.d/default.conf

@@ -34,7 +34,13 @@ func main() {
 		api.GET("/sessions/:id", handlers.GetSession)
 		api.PATCH("/sessions/:id/contestants/:cid/score", handlers.UpdateScore)
 		api.POST("/sessions/:id/mark_question", handlers.MarkQuestion)
+
+		// Uploads
+		api.POST("/upload", handlers.UploadMedia)
 	}
+
+	// Serve static files from the uploads directory
+	r.Static("/uploads", "./uploads")
 
 	log.Println("Backend server is running on :8080")
 	if err := r.Run(":8080"); err != nil {
