@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { Play, Plus, Trash2 } from 'lucide-react';
+import { Play, Plus, Trash2, Pencil } from 'lucide-react';
 import { getGames, deleteGame } from '../api/client';
 
 export default function Dashboard() {
@@ -55,13 +55,23 @@ export default function Dashboard() {
             </div>
 
             <div className="flex justify-between items-center mt-auto">
-              <Link
-                to={`/setup/${game.id}`}
-                className="flex items-center gap-2 bg-jeopardy-blue hover:bg-blue-600 text-white px-5 py-2 rounded-lg font-semibold transition-colors"
-              >
-                <Play size={18} />
-                Play Now
-              </Link>
+              <div className="flex items-center gap-2">
+                <Link
+                  to={`/setup/${game.id}`}
+                  className="flex items-center gap-2 bg-jeopardy-blue hover:bg-blue-600 text-white px-5 py-2 rounded-lg font-semibold transition-colors"
+                >
+                  <Play size={18} />
+                  Play Now
+                </Link>
+                <Link
+                  to={`/edit/${game.id}`}
+                  className="flex items-center gap-2 bg-white/10 hover:bg-white/20 text-white px-4 py-2 rounded-lg font-semibold transition-colors"
+                  title="Edit Game"
+                >
+                  <Pencil size={18} />
+                  Edit
+                </Link>
+              </div>
               <button
                 onClick={() => handleDelete(game.id)}
                 className="text-red-400 hover:text-red-300 p-2 rounded-lg hover:bg-red-400/10 transition-colors"

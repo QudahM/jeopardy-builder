@@ -1,11 +1,15 @@
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
 import { Save, ArrowLeft, Plus, Settings } from 'lucide-react';
-import { createGame, uploadMedia } from '../api/client';
+import { createGame, updateGame, uploadMedia, getGame } from '../api/client';
 
 export default function GameBuilder() {
   const navigate = useNavigate();
+  const { id: editId } = useParams();
+  const isEditMode = Boolean(editId);
+
   const [isUploading, setIsUploading] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const [config, setConfig] = useState({
     title: 'New Game',
     num_categories: 6,
@@ -29,13 +33,47 @@ export default function GameBuilder() {
     }))
   );
 
+  // Load existing game data in edit mode
+  useEffect(() => {
+    if (!editId) return;
+    let mounted = true;
+    const loadGame = async () => {
+      setIsLoading(true);
+      try {
+        const game = await getGame(editId);
+        if (!mounted) return;
+        setConfig({
+          title: game.title,
+          num_categories: game.num_categories,
+          questions_per_category: game.questions_per_category,
+          base_point_value: game.base_point_value,
+        });
+        setCategories(
+          game.categories.map(cat => ({
+            ...cat,
+            questions: cat.questions.map(q => ({
+              ...q,
+              media_file: null,
+            })),
+          }))
+        );
+      } catch (err) {
+        alert('Error loading game');
+        console.error(err);
+        navigate('/dashboard');
+      } finally {
+        if (mounted) setIsLoading(false);
+      }
+    };
+    loadGame();
+    return () => { mounted = false; };
+  }, [editId, navigate]);
+
   const handleConfigChange = (e) => {
     const { name, value } = e.target;
     const numValue = parseInt(value, 10) || value;
     setConfig((prev) => ({ ...prev, [name]: numValue }));
     
-    // Simplification for the exercise: If num_categories or questions change, we reset the board array.
-    // In a fully robust app, it would append/remove to preserve data.
     if (name === 'num_categories' || name === 'questions_per_category') {
       const numCat = name === 'num_categories' ? numValue : config.num_categories;
       const numQ = name === 'questions_per_category' ? numValue : config.questions_per_category;
@@ -94,9 +132,12 @@ export default function GameBuilder() {
     e.preventDefault();
     setIsUploading(true);
     try {
-      const payloadCats = [...categories];
+      const payloadCats = categories.map(cat => ({
+        ...cat,
+        questions: cat.questions.map(q => ({ ...q })),
+      }));
 
-      // Upload all files before finalizing the payload
+      // Upload all new files before finalizing the payload
       for (let i = 0; i < payloadCats.length; i++) {
         for (let j = 0; j < payloadCats[i].questions.length; j++) {
           let q = payloadCats[i].questions[j];
@@ -104,10 +145,8 @@ export default function GameBuilder() {
             const result = await uploadMedia(q.media_file);
             q.media_url = result.url;
           } else if (q.media_type !== 'none' && !q.media_url) {
-            // Revert to none if no file was uploaded
             q.media_type = 'none';
           }
-          // Remove internal file reference before sending to backend
           delete q.media_file;
         }
       }
@@ -116,15 +155,28 @@ export default function GameBuilder() {
         ...config,
         categories: payloadCats
       };
-      await createGame(payload);
-      navigate('/');
+
+      if (isEditMode) {
+        await updateGame(editId, payload);
+      } else {
+        await createGame(payload);
+      }
+      navigate('/dashboard');
     } catch (err) {
-      alert('Error creating game');
+      alert(`Error ${isEditMode ? 'updating' : 'creating'} game`);
       console.error(err);
     } finally {
       setIsUploading(false);
     }
   };
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-2xl text-jeopardy-gold animate-pulse">Loading game...</div>
+      </div>
+    );
+  }
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -132,7 +184,7 @@ export default function GameBuilder() {
         <button onClick={() => navigate(-1)} className="p-2 bg-white/10 rounded-full hover:bg-white/20 transition">
           <ArrowLeft size={24} />
         </button>
-        <h1 className="text-3xl font-bold">Game Builder</h1>
+        <h1 className="text-3xl font-bold">{isEditMode ? 'Edit Game' : 'Game Builder'}</h1>
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-12">
@@ -165,6 +217,7 @@ export default function GameBuilder() {
                 min="1" max="6"
                 className="w-full bg-white/5 border border-white/10 rounded-lg p-3 text-white focus:outline-none focus:border-jeopardy-gold transition"
                 required
+                disabled={isEditMode}
               />
             </div>
             <div>
@@ -177,6 +230,7 @@ export default function GameBuilder() {
                 min="1" max="10"
                 className="w-full bg-white/5 border border-white/10 rounded-lg p-3 text-white focus:outline-none focus:border-jeopardy-gold transition"
                 required
+                disabled={isEditMode}
               />
             </div>
             <div>
@@ -238,6 +292,11 @@ export default function GameBuilder() {
                           </div>
                           {(q.media_type && q.media_type !== 'none') && (
                             <div className="mb-2">
+                              {q.media_url && !q.media_file && (
+                                <div className="text-xs text-green-400 mb-1 truncate" title={q.media_url}>
+                                  ✓ Current: {q.media_url.split('/').pop().replace(/^\d+_/, '')}
+                                </div>
+                              )}
                               <input
                                 type="file"
                                 accept={getAcceptTypes(q.media_type)}
@@ -281,7 +340,7 @@ export default function GameBuilder() {
             className="flex items-center gap-2 bg-jeopardy-gold text-jeopardy-dark px-12 py-4 rounded-full font-extrabold text-lg transition-all transform hover:-translate-y-1 shadow-xl shadow-jeopardy-gold/20 disabled:opacity-75 disabled:cursor-not-allowed disabled:hover:translate-y-0"
           >
             <Save size={24} className={isUploading ? "animate-pulse" : ""} />
-            {isUploading ? 'Uploading Media & Saving...' : 'Save Game Configuration'}
+            {isUploading ? 'Uploading Media & Saving...' : (isEditMode ? 'Update Game' : 'Save Game Configuration')}
           </button>
         </div>
       </form>

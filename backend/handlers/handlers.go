@@ -62,6 +62,55 @@ func DeleteGame(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"status": "deleted"})
 }
 
+// UpdateGame updates a game's settings, categories, and questions
+func UpdateGame(c *gin.Context) {
+	id := c.Param("id")
+
+	var existingGame models.Game
+	if err := database.DB.Preload("Categories").Preload("Categories.Questions").First(&existingGame, id).Error; err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "Game not found"})
+		return
+	}
+
+	var input models.Game
+	if err := c.ShouldBindJSON(&input); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	// Delete old categories and questions (cascade will handle questions)
+	for _, cat := range existingGame.Categories {
+		database.DB.Where("category_id = ?", cat.ID).Delete(&models.Question{})
+	}
+	database.DB.Where("game_id = ?", existingGame.ID).Delete(&models.Category{})
+
+	// Update game fields
+	existingGame.Title = input.Title
+	existingGame.NumCategories = input.NumCategories
+	existingGame.QuestionsPerCategory = input.QuestionsPerCategory
+	existingGame.BasePointValue = input.BasePointValue
+	existingGame.Categories = input.Categories
+
+	// Set the GameID on all new categories
+	for i := range existingGame.Categories {
+		existingGame.Categories[i].GameID = existingGame.ID
+		existingGame.Categories[i].ID = 0
+		for j := range existingGame.Categories[i].Questions {
+			existingGame.Categories[i].Questions[j].ID = 0
+			existingGame.Categories[i].Questions[j].CategoryID = 0
+		}
+	}
+
+	if err := database.DB.Save(&existingGame).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	// Reload to return full data
+	database.DB.Preload("Categories").Preload("Categories.Questions").First(&existingGame, existingGame.ID)
+	c.JSON(http.StatusOK, existingGame)
+}
+
 // --- Session Endpoints ---
 
 // CreateSession creates a gameplay session

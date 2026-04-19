@@ -28,10 +28,11 @@ func UploadMedia(c *gin.Context) {
 		}
 	}
 
-	// Generate a unique file name
+	// Generate a unique file name preserving the original name
 	ext := filepath.Ext(file.Filename)
+	baseName := file.Filename[:len(file.Filename)-len(ext)]
 	timestamp := time.Now().UnixNano()
-	filename := fmt.Sprintf("%d%s", timestamp, ext)
+	filename := fmt.Sprintf("%d_%s%s", timestamp, baseName, ext)
 	dst := filepath.Join(uploadsDir, filename)
 
 	if err := c.SaveUploadedFile(file, dst); err != nil {
@@ -41,7 +42,7 @@ func UploadMedia(c *gin.Context) {
 
 	// Transcode unsupported video formats to mp4
 	if ext == ".mov" || ext == ".mkv" || ext == ".avi" {
-		newFilename := fmt.Sprintf("%d.mp4", timestamp)
+		newFilename := fmt.Sprintf("%d_%s.mp4", timestamp, baseName)
 		newDst := filepath.Join(uploadsDir, newFilename)
 
 		cmd := exec.Command("ffmpeg", "-y", "-i", dst, "-c:v", "libx264", "-c:a", "aac", newDst)

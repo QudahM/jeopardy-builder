@@ -28,6 +28,7 @@ func main() {
 		api.POST("/games", handlers.CreateGame)
 		api.GET("/games/:id", handlers.GetGame)
 		api.DELETE("/games/:id", handlers.DeleteGame)
+		api.PUT("/games/:id", handlers.UpdateGame)
 
 		// Sessions
 		api.POST("/sessions", handlers.CreateSession)

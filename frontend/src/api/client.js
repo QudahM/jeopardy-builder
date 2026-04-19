@@ -18,6 +18,7 @@ export const getGames = () => api.get('/games').then(res => res.data);
 export const getGame = (id) => api.get(`/games/${id}`).then(res => res.data);
 export const createGame = (gameData) => api.post('/games', gameData).then(res => res.data);
 export const deleteGame = (id) => api.delete(`/games/${id}`).then(res => res.data);
+export const updateGame = (id, gameData) => api.put(`/games/${id}`, gameData).then(res => res.data);
 
 // Session API
 export const createSession = (sessionData) => api.post('/sessions', sessionData).then(res => res.data);

@@ -12,6 +12,7 @@ function App() {
         <Route path="/" element={<Home />} />
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/create" element={<GameBuilder />} />
+        <Route path="/edit/:id" element={<GameBuilder />} />
         <Route path="/setup/:id" element={<GameSetup />} />
         <Route path="/play/:sessionId" element={<PlayBoard />} />
       </Routes>
