@@ -28,6 +28,7 @@ export default function GameBuilder() {
         media_type: 'none',
         media_url: '',
         media_file: null,
+        options: '',
         answer: '',
       })),
     }))
@@ -89,6 +90,7 @@ export default function GameBuilder() {
             media_type: 'none',
             media_url: '',
             media_file: null,
+            options: '',
             answer: '',
           })),
         }))
@@ -126,6 +128,46 @@ export default function GameBuilder() {
       case 'audio': return '.mp3,.aac,.wav,.flac,.m4a';
       default: return '';
     }
+  };
+
+  const parseOptions = (optionsStr) => {
+    if (!optionsStr) return [];
+    try { return JSON.parse(optionsStr); } catch { return []; }
+  };
+
+  const updateOption = (catIdx, qIdx, optionIdx, value) => {
+    const newCats = [...categories];
+    const opts = parseOptions(newCats[catIdx].questions[qIdx].options);
+    opts[optionIdx] = value;
+    newCats[catIdx].questions[qIdx].options = JSON.stringify(opts);
+    setCategories(newCats);
+  };
+
+  const addOption = (catIdx, qIdx) => {
+    const newCats = [...categories];
+    const opts = parseOptions(newCats[catIdx].questions[qIdx].options);
+    opts.push('');
+    newCats[catIdx].questions[qIdx].options = JSON.stringify(opts);
+    setCategories(newCats);
+  };
+
+  const removeOption = (catIdx, qIdx, optionIdx) => {
+    const newCats = [...categories];
+    const opts = parseOptions(newCats[catIdx].questions[qIdx].options);
+    opts.splice(optionIdx, 1);
+    newCats[catIdx].questions[qIdx].options = opts.length > 0 ? JSON.stringify(opts) : '';
+    setCategories(newCats);
+  };
+
+  const toggleMultipleChoice = (catIdx, qIdx) => {
+    const newCats = [...categories];
+    const q = newCats[catIdx].questions[qIdx];
+    if (parseOptions(q.options).length > 0) {
+      q.options = '';
+    } else {
+      q.options = JSON.stringify(['', '', '', '']);
+    }
+    setCategories(newCats);
   };
 
   const handleSubmit = async (e) => {
@@ -282,12 +324,13 @@ export default function GameBuilder() {
                             <select
                               value={q.media_type || 'none'}
                               onChange={(e) => handleQuestionChange(catIdx, qIdx, 'media_type', e.target.value)}
-                              className="bg-black/50 border border-white/10 rounded px-2 py-1 text-xs text-white focus:outline-none focus:border-jeopardy-gold"
+                              className="bg-jeopardy-blue/80 border border-jeopardy-gold/40 rounded-lg px-3 py-1.5 text-xs text-jeopardy-gold font-semibold focus:outline-none focus:border-jeopardy-gold focus:ring-1 focus:ring-jeopardy-gold/50 cursor-pointer appearance-none pr-6"
+                              style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23ffcc00' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E")`, backgroundRepeat: 'no-repeat', backgroundPosition: 'right 6px center' }}
                             >
-                              <option value="none">Text Only</option>
-                              <option value="image">Image</option>
-                              <option value="audio">Audio</option>
-                              <option value="video">Video</option>
+                              <option value="none" className="bg-[#0a1128] text-white">Text Only</option>
+                              <option value="image" className="bg-[#0a1128] text-white">Image</option>
+                              <option value="audio" className="bg-[#0a1128] text-white">Audio</option>
+                              <option value="video" className="bg-[#0a1128] text-white">Video</option>
                             </select>
                           </div>
                           {(q.media_type && q.media_type !== 'none') && (
@@ -312,6 +355,54 @@ export default function GameBuilder() {
                             placeholder="Enter the clue text..."
                             required={!q.media_type || q.media_type === 'none'}
                           />
+
+                          {/* Multiple Choice Toggle */}
+                          <button
+                            type="button"
+                            onClick={() => toggleMultipleChoice(catIdx, qIdx)}
+                            className={`w-full text-xs font-semibold py-1.5 rounded-lg border transition-all ${
+                              parseOptions(q.options).length > 0
+                                ? 'bg-jeopardy-gold/20 border-jeopardy-gold/50 text-jeopardy-gold'
+                                : 'bg-white/5 border-white/10 text-gray-400 hover:text-white hover:border-white/20'
+                            }`}
+                          >
+                            {parseOptions(q.options).length > 0 ? '✓ Multiple Choice Enabled' : '+ Add Multiple Choice Options'}
+                          </button>
+
+                          {/* Multiple Choice Options */}
+                          {parseOptions(q.options).length > 0 && (
+                            <div className="space-y-1.5 mt-1">
+                              {parseOptions(q.options).map((opt, optIdx) => (
+                                <div key={optIdx} className="flex items-center gap-2">
+                                  <span className="text-xs font-bold text-jeopardy-gold w-5 shrink-0">
+                                    {String.fromCharCode(65 + optIdx)})
+                                  </span>
+                                  <input
+                                    type="text"
+                                    value={opt}
+                                    onChange={(e) => updateOption(catIdx, qIdx, optIdx, e.target.value)}
+                                    className="flex-1 bg-white/5 rounded-md p-1.5 text-xs text-white focus:outline-none focus:border focus:border-jeopardy-gold"
+                                    placeholder={`Option ${String.fromCharCode(65 + optIdx)}...`}
+                                  />
+                                  <button
+                                    type="button"
+                                    onClick={() => removeOption(catIdx, qIdx, optIdx)}
+                                    className="text-red-400 hover:text-red-300 text-xs px-1"
+                                    title="Remove option"
+                                  >
+                                    ✕
+                                  </button>
+                                </div>
+                              ))}
+                              <button
+                                type="button"
+                                onClick={() => addOption(catIdx, qIdx)}
+                                className="w-full text-xs text-blue-300 hover:text-blue-200 py-1 border border-dashed border-white/10 rounded-md hover:border-white/20 transition"
+                              >
+                                + Add Option
+                              </button>
+                            </div>
+                          )}
                         </div>
                         <div>
                           <label className="text-xs text-jeopardy-gold font-semibold uppercase tracking-wider block mb-1">Answer</label>

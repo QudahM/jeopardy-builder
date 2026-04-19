@@ -31,6 +31,7 @@ type Question struct {
 	Clue       string `json:"clue"`
 	MediaType  string `json:"media_type"` // none, image, audio, video
 	MediaURL   string `json:"media_url"`
+	Options    string `json:"options"` // JSON array of multiple choice options, e.g. '["A","B","C"]'
 	Answer     string `json:"answer"`
 }
 

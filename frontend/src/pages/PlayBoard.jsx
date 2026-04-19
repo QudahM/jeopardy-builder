@@ -185,15 +185,15 @@ export default function PlayBoard() {
 
       {/* ACTIVE QUESTION MODAL OVERLAY */}
       {activeQuestion && (
-        <div className="fixed inset-x-0 top-0 bottom-40 z-40 bg-black/95 flex flex-col items-center justify-center p-8 animate-in zoom-in duration-300">
+        <div className="fixed inset-x-0 top-0 bottom-40 z-40 bg-black/95 flex flex-col items-center overflow-y-auto p-8 animate-in zoom-in duration-300">
           <button 
             onClick={closeQuestionModal}
-            className="absolute top-8 right-8 text-gray-400 hover:text-white p-2 rounded-full hover:bg-white/10"
+            className="absolute top-8 right-8 text-gray-400 hover:text-white p-2 rounded-full hover:bg-white/10 z-50"
           >
             <X size={48} />
           </button>
           
-          <div className="flex-1 w-full flex flex-col items-center justify-center max-w-6xl text-center gap-8">
+          <div className="w-full flex flex-col items-center max-w-6xl text-center gap-6 my-auto py-4">
             {!showAnswer && activeQuestion.media_type && activeQuestion.media_type !== 'none' && activeQuestion.media_url && (
               <div className="flex justify-center items-center w-full max-h-[40vh]">
                 {activeQuestion.media_type === 'image' && (
@@ -228,6 +228,33 @@ export default function PlayBoard() {
                 {showAnswer ? activeQuestion.answer : activeQuestion.clue}
               </h2>
             )}
+
+            {/* Multiple Choice Options */}
+            {!showAnswer && activeQuestion.options && (() => {
+              try {
+                const opts = JSON.parse(activeQuestion.options);
+                if (Array.isArray(opts) && opts.length > 0) {
+                  return (
+                    <div className="w-full max-w-3xl grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4">
+                      {opts.map((opt, i) => (
+                        <div
+                          key={i}
+                          className="flex items-center gap-4 bg-jeopardy-blue/40 border-2 border-jeopardy-gold/30 rounded-xl px-6 py-4 text-left"
+                        >
+                          <span className="text-jeopardy-gold font-black text-3xl md:text-4xl shrink-0">
+                            {String.fromCharCode(65 + i)})
+                          </span>
+                          <span className="text-white font-bold text-2xl md:text-3xl">
+                            {opt}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  );
+                }
+              } catch { /* ignore parse errors */ }
+              return null;
+            })()}
           </div>
 
           <div className="mt-8 space-y-4">
