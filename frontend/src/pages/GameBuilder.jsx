@@ -17,7 +17,8 @@ export default function GameBuilder() {
       name: `Category ${i + 1}`,
       position: i,
       questions: Array(config.questions_per_category).fill(null).map((_, j) => ({
-        tier: j + 1,
+        tier: j,
+        point_value: (j + 1) * config.base_point_value,
         clue: '',
         answer: '',
       })),
@@ -40,13 +41,25 @@ export default function GameBuilder() {
           name: `Category ${i + 1}`,
           position: i,
           questions: Array(numQ).fill(null).map((_, j) => ({
-            tier: j + 1,
+            tier: j,
+            point_value: (j + 1) * (name === 'base_point_value' ? numValue : config.base_point_value),
             clue: '',
             answer: '',
           })),
         }))
       );
     }
+  };
+
+  const handleRowPointValueChange = (rowIdx, value) => {
+    const numValue = parseInt(value, 10) || 0;
+    const newCats = categories.map(cat => ({
+      ...cat,
+      questions: cat.questions.map((q, qIdx) => 
+        qIdx === rowIdx ? { ...q, point_value: numValue } : q
+      )
+    }));
+    setCategories(newCats);
   };
 
   const handleCategoryNameChange = (catIdx, name) => {
@@ -161,9 +174,15 @@ export default function GameBuilder() {
                 
                 <div className="space-y-4">
                   {cat.questions.map((q, qIdx) => (
-                    <div key={qIdx} className="bg-black/20 p-4 rounded-xl border border-white/5 relative">
-                      <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-jeopardy-gold text-jeopardy-dark font-extrabold px-3 py-1 rounded-full text-xs">
-                        ${q.tier * config.base_point_value}
+                    <div key={qIdx} className="bg-black/20 p-4 rounded-xl border border-white/5 relative group">
+                      <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-jeopardy-gold text-jeopardy-dark font-extrabold px-3 py-1 rounded-full text-xs shadow-md z-10">
+                        <input
+                          type="number"
+                          value={q.point_value}
+                          onChange={(e) => handleRowPointValueChange(qIdx, e.target.value)}
+                          className="bg-transparent border-none text-center w-16 focus:outline-none focus:ring-0 appearance-none m-0"
+                          title="Click to change point value for this row"
+                        />
                       </div>
                       <div className="space-y-3 mt-2">
                         <div>

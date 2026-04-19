@@ -10,7 +10,7 @@ Jeopardy Builder was created to provide a seamless way for educators, teams, and
 ### Tool Stack
 - **Frontend**: React, Tailwind CSS, Lucide Icons, Vite
 - **Backend**: Go (Golang)
-- **Database**: SQLite (managed via Go)
+- **Database**: PostgreSQL (via Docker)
 - **Deployment**: Docker, Nginx
 
 ## Getting Started

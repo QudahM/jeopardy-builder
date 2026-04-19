@@ -78,7 +78,7 @@ export default function PlayBoard() {
   const { game, contestants, used_questions } = session;
   const usedQIds = new Set(used_questions?.map(uq => uq.question_id) || []);
 
-  const pointValue = activeQuestion ? activeQuestion.tier * game.base_point_value : 0;
+  const pointValue = activeQuestion ? activeQuestion.point_value : 0;
 
   return (
     <div className="h-screen flex flex-col bg-jeopardy-dark overflow-hidden">
@@ -118,7 +118,7 @@ export default function PlayBoard() {
                   >
                     {!isUsed && (
                       <span className="text-jeopardy-gold text-shadow font-black text-5xl lg:text-6xl drop-shadow-lg">
-                        ${q.tier * game.base_point_value}
+                        ${q.point_value}
                       </span>
                     )}
                   </div>

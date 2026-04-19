@@ -26,7 +26,8 @@ type Category struct {
 type Question struct {
 	ID         uint   `json:"id" gorm:"primaryKey"`
 	CategoryID uint   `json:"category_id"`
-	Tier       int    `json:"tier"` // 1, 2, 3...
+	Tier       int    `json:"tier"` // Row index (0, 1, 2...)
+	PointValue int    `json:"point_value"`
 	Clue       string `json:"clue"`
 	Answer     string `json:"answer"`
 }
