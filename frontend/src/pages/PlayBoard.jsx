@@ -161,6 +161,24 @@ export default function PlayBoard() {
                  </div>
                </div>
              )}
+
+             {/* Host Controls: +100 / -100 when no question is active */}
+             {!activeQuestion && (
+               <div className="flex w-full gap-2 justify-center items-center px-2 pb-1">
+                 <button 
+                   onClick={() => alterScore(c.id, 100)}
+                   className="flex-1 bg-green-700/60 hover:bg-green-600 text-white font-bold py-1.5 rounded-md transition-all active:scale-95 text-sm border border-green-500/30"
+                 >
+                   +$100
+                 </button>
+                 <button 
+                   onClick={() => alterScore(c.id, -100)}
+                   className="flex-1 bg-red-700/60 hover:bg-red-600 text-white font-bold py-1.5 rounded-md transition-all active:scale-95 text-sm border border-red-500/30"
+                 >
+                   -$100
+                 </button>
+               </div>
+             )}
           </div>
         ))}
       </footer>
