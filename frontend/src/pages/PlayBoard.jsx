@@ -223,9 +223,37 @@ export default function PlayBoard() {
               </div>
             )}
             
-            {(!activeQuestion.media_type || activeQuestion.media_type === 'none' || activeQuestion.clue || showAnswer) && (
-              <h2 className={`${!showAnswer && activeQuestion.media_type && activeQuestion.media_type !== 'none' ? 'text-4xl md:text-5xl' : 'text-6xl md:text-8xl'} font-bold uppercase text-white tracking-wide`} style={{ textShadow: '4px 4px 0 #000' }}>
-                {showAnswer ? activeQuestion.answer : activeQuestion.clue}
+            {/* Clue text (shown when not revealing answer) */}
+            {!showAnswer && (!activeQuestion.media_type || activeQuestion.media_type === 'none' || activeQuestion.clue) && (
+              <h2 className={`${activeQuestion.media_type && activeQuestion.media_type !== 'none' ? 'text-4xl md:text-5xl' : 'text-6xl md:text-8xl'} font-bold uppercase text-white tracking-wide`} style={{ textShadow: '4px 4px 0 #000' }}>
+                {activeQuestion.clue}
+              </h2>
+            )}
+
+            {/* Answer media (shown when revealing answer) */}
+            {showAnswer && activeQuestion.answer_media_type && activeQuestion.answer_media_type !== 'none' && activeQuestion.answer_media_url && (
+              <div className="flex justify-center items-center w-full max-h-[40vh]">
+                {activeQuestion.answer_media_type === 'image' && (
+                  <img src={activeQuestion.answer_media_url?.startsWith('/') ? `${window.location.origin}${activeQuestion.answer_media_url}` : activeQuestion.answer_media_url} referrerPolicy="no-referrer" alt="Answer Media" className="max-h-[40vh] max-w-full rounded-2xl shadow-2xl border-4 border-jeopardy-gold/40 object-contain" />
+                )}
+                {activeQuestion.answer_media_type === 'video' && (
+                  <div className="max-h-[40vh] max-w-full rounded-2xl overflow-hidden shadow-2xl border-4 border-jeopardy-gold/40 bg-black flex justify-center items-center">
+                    <video
+                      src={activeQuestion.answer_media_url?.startsWith('/') ? `${window.location.origin}${activeQuestion.answer_media_url}` : activeQuestion.answer_media_url}
+                      autoPlay
+                      controls
+                      playsInline
+                      style={{ maxWidth: '100%', maxHeight: '40vh' }}
+                    />
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Answer text (shown when revealing answer) */}
+            {showAnswer && (
+              <h2 className={`${activeQuestion.answer_media_type && activeQuestion.answer_media_type !== 'none' ? 'text-4xl md:text-5xl' : 'text-6xl md:text-8xl'} font-bold uppercase text-white tracking-wide`} style={{ textShadow: '4px 4px 0 #000' }}>
+                {activeQuestion.answer}
               </h2>
             )}
 

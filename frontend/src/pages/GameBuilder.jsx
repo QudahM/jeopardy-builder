@@ -30,6 +30,9 @@ export default function GameBuilder() {
         media_file: null,
         options: '',
         answer: '',
+        answer_media_type: 'none',
+        answer_media_url: '',
+        answer_media_file: null,
       })),
     }))
   );
@@ -55,6 +58,7 @@ export default function GameBuilder() {
             questions: cat.questions.map(q => ({
               ...q,
               media_file: null,
+              answer_media_file: null,
             })),
           }))
         );
@@ -92,6 +96,9 @@ export default function GameBuilder() {
             media_file: null,
             options: '',
             answer: '',
+            answer_media_type: 'none',
+            answer_media_url: '',
+            answer_media_file: null,
           })),
         }))
       );
@@ -190,6 +197,15 @@ export default function GameBuilder() {
             q.media_type = 'none';
           }
           delete q.media_file;
+
+          // Handle answer media uploads
+          if (q.answer_media_type !== 'none' && q.answer_media_file) {
+            const result = await uploadMedia(q.answer_media_file);
+            q.answer_media_url = result.url;
+          } else if (q.answer_media_type !== 'none' && !q.answer_media_url) {
+            q.answer_media_type = 'none';
+          }
+          delete q.answer_media_file;
         }
       }
 
@@ -405,7 +421,34 @@ export default function GameBuilder() {
                           )}
                         </div>
                         <div>
-                          <label className="text-xs text-jeopardy-gold font-semibold uppercase tracking-wider block mb-1">Answer</label>
+                          <div className="flex justify-between items-center mb-1">
+                            <label className="text-xs text-jeopardy-gold font-semibold uppercase tracking-wider block">Answer</label>
+                            <select
+                              value={q.answer_media_type || 'none'}
+                              onChange={(e) => handleQuestionChange(catIdx, qIdx, 'answer_media_type', e.target.value)}
+                              className="bg-jeopardy-blue/80 border border-jeopardy-gold/40 rounded-lg px-3 py-1.5 text-xs text-jeopardy-gold font-semibold focus:outline-none focus:border-jeopardy-gold focus:ring-1 focus:ring-jeopardy-gold/50 cursor-pointer appearance-none pr-6"
+                              style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23ffcc00' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E")`, backgroundRepeat: 'no-repeat', backgroundPosition: 'right 6px center' }}
+                            >
+                              <option value="none" className="bg-[#0a1128] text-white">Text Only</option>
+                              <option value="image" className="bg-[#0a1128] text-white">Image</option>
+                              <option value="video" className="bg-[#0a1128] text-white">Video</option>
+                            </select>
+                          </div>
+                          {(q.answer_media_type && q.answer_media_type !== 'none') && (
+                            <div className="mb-2">
+                              {q.answer_media_url && !q.answer_media_file && (
+                                <div className="text-xs text-green-400 mb-1 truncate" title={q.answer_media_url}>
+                                  ✓ Current: {q.answer_media_url.split('/').pop().replace(/^\d+_/, '')}
+                                </div>
+                              )}
+                              <input
+                                type="file"
+                                accept={getAcceptTypes(q.answer_media_type)}
+                                onChange={(e) => handleQuestionChange(catIdx, qIdx, 'answer_media_file', e.target.files[0])}
+                                className="w-full bg-white/5 rounded-lg p-2 text-sm text-white focus:outline-none focus:border focus:border-jeopardy-gold block file:mr-4 file:py-1 file:px-3 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-jeopardy-gold file:text-jeopardy-dark hover:file:bg-yellow-400"
+                              />
+                            </div>
+                          )}
                           <input
                             type="text"
                             value={q.answer}
