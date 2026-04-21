@@ -13,6 +13,15 @@ type Game struct {
 	Categories           []Category `json:"categories" gorm:"constraint:OnDelete:CASCADE;"`
 	CreatedAt            time.Time  `json:"created_at"`
 	UpdatedAt            time.Time  `json:"updated_at"`
+
+	// Final Jeopardy
+	FinalJeopardyCategory        string `json:"final_jeopardy_category"`
+	FinalJeopardyClue            string `json:"final_jeopardy_clue"`
+	FinalJeopardyAnswer          string `json:"final_jeopardy_answer"`
+	FinalJeopardyMediaType       string `json:"final_jeopardy_media_type"`       // none, image, audio, video
+	FinalJeopardyMediaURL        string `json:"final_jeopardy_media_url"`
+	FinalJeopardyAnswerMediaType string `json:"final_jeopardy_answer_media_type"` // none, image, video
+	FinalJeopardyAnswerMediaURL  string `json:"final_jeopardy_answer_media_url"`
 }
 
 type Category struct {

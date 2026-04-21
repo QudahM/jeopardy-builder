@@ -91,6 +91,15 @@ func UpdateGame(c *gin.Context) {
 	existingGame.BasePointValue = input.BasePointValue
 	existingGame.Categories = input.Categories
 
+	// Update Final Jeopardy fields
+	existingGame.FinalJeopardyCategory = input.FinalJeopardyCategory
+	existingGame.FinalJeopardyClue = input.FinalJeopardyClue
+	existingGame.FinalJeopardyAnswer = input.FinalJeopardyAnswer
+	existingGame.FinalJeopardyMediaType = input.FinalJeopardyMediaType
+	existingGame.FinalJeopardyMediaURL = input.FinalJeopardyMediaURL
+	existingGame.FinalJeopardyAnswerMediaType = input.FinalJeopardyAnswerMediaType
+	existingGame.FinalJeopardyAnswerMediaURL = input.FinalJeopardyAnswerMediaURL
+
 	// Set the GameID on all new categories
 	for i := range existingGame.Categories {
 		existingGame.Categories[i].GameID = existingGame.ID

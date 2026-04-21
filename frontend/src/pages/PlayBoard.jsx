@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Home, X } from 'lucide-react';
+import { Home, X, Trophy } from 'lucide-react';
 
 import { getSession, updateScore, markQuestion } from '../api/client';
 
@@ -11,6 +11,12 @@ export default function PlayBoard() {
   const [activeQuestion, setActiveQuestion] = useState(null);
   const [showAnswer, setShowAnswer] = useState(false);
   const [loading, setLoading] = useState(true);
+
+  // Final Jeopardy state
+  const [fjActive, setFjActive] = useState(false);
+  const [fjShowAnswer, setFjShowAnswer] = useState(false);
+  const [fjWagers, setFjWagers] = useState({});
+  const [fjUsed, setFjUsed] = useState(false);
 
   const fetchSessionData = useCallback(async (isRefresh = false) => {
     try {
@@ -73,6 +79,27 @@ export default function PlayBoard() {
     await loadSession();
   };
 
+  // Final Jeopardy handlers
+  const openFinalJeopardy = () => {
+    if (!session) return;
+    const wagers = {};
+    session.contestants.forEach(c => { wagers[c.id] = 0; });
+    setFjWagers(wagers);
+    setFjActive(true);
+    setFjShowAnswer(false);
+  };
+
+  const closeFinalJeopardy = () => {
+    setFjActive(false);
+    setFjShowAnswer(false);
+    setFjUsed(true);
+  };
+
+  const handleFjWagerChange = (contestantId, value) => {
+    const num = parseInt(value, 10) || 0;
+    setFjWagers(prev => ({ ...prev, [contestantId]: Math.abs(num) }));
+  };
+
   if (loading) return <div className="h-screen flex items-center justify-center text-2xl font-bold text-jeopardy-gold">Loading...</div>;
   if (!session) return <div className="p-8">Session not found.</div>;
 
@@ -80,6 +107,10 @@ export default function PlayBoard() {
   const usedQIds = new Set(used_questions?.map(uq => uq.question_id) || []);
 
   const pointValue = activeQuestion ? activeQuestion.point_value : 0;
+
+  const hasFinalJeopardy = game.final_jeopardy_clue || game.final_jeopardy_answer;
+
+  const resolveUrl = (url) => url?.startsWith('/') ? `${window.location.origin}${url}` : url;
 
   return (
     <div className="h-screen flex flex-col bg-jeopardy-dark overflow-hidden">
@@ -127,6 +158,21 @@ export default function PlayBoard() {
               })}
             </React.Fragment>
           ))}
+
+          {/* FINAL JEOPARDY ROW */}
+          {hasFinalJeopardy && (
+            <div
+              onClick={() => !fjUsed && openFinalJeopardy()}
+              className={`border-[3px] border-black flex items-center justify-center gap-3 p-4 transition-all cursor-pointer ${fjUsed ? 'bg-gray-800/50 opacity-40 cursor-default' : 'bg-linear-to-r from-red-800 to-red-900 hover:from-red-700 hover:to-red-800 shadow-[inset_0_0_30px_rgba(0,0,0,0.5)] active:scale-[0.99]'}`}
+              style={{ gridColumn: `1 / -1` }}
+            >
+              <Trophy size={36} className="text-jeopardy-gold" />
+              <span className="text-jeopardy-gold text-shadow font-black text-4xl lg:text-5xl uppercase tracking-[0.3em] drop-shadow-lg">
+                Final Jeopardy
+              </span>
+              <Trophy size={36} className="text-jeopardy-gold" />
+            </div>
+          )}
         </div>
       </main>
 
@@ -162,8 +208,41 @@ export default function PlayBoard() {
                </div>
              )}
 
+             {/* Final Jeopardy Wager Controls */}
+             {fjActive && (
+               <div className="absolute inset-0 bg-black/90 backdrop-blur-md flex flex-col items-center justify-between p-3 z-20">
+                 <div className="w-full text-center shrink-0">
+                   <div className="text-white font-black text-lg lg:text-xl uppercase tracking-widest drop-shadow-[0_2px_2px_rgba(0,0,0,0.8)]">{c.name}</div>
+                 </div>
+                 <div className="w-full px-1">
+                   <label className="text-xs text-jeopardy-gold font-semibold uppercase tracking-wider block text-center mb-1">Wager $</label>
+                   <input
+                     type="number"
+                     min="0"
+                     value={fjWagers[c.id] || 0}
+                     onChange={(e) => handleFjWagerChange(c.id, e.target.value)}
+                     className="w-full bg-white/10 border border-jeopardy-gold/40 rounded-lg p-2 text-center text-white font-bold text-lg focus:outline-none focus:border-jeopardy-gold"
+                   />
+                 </div>
+                 <div className="flex w-full gap-2 justify-center items-center pb-1">
+                   <button 
+                    onClick={() => alterScore(c.id, fjWagers[c.id] || 0)}
+                    className="flex-1 bg-green-600 hover:bg-green-500 text-white font-black py-2 rounded-lg shadow-[0_0_15px_rgba(0,255,0,0.4)] transition-all active:scale-95 text-sm lg:text-base border border-green-400/30"
+                   >
+                     +${fjWagers[c.id] || 0}
+                   </button>
+                   <button 
+                    onClick={() => alterScore(c.id, -(fjWagers[c.id] || 0))}
+                    className="flex-1 bg-red-600 hover:bg-red-500 text-white font-black py-2 rounded-lg shadow-[0_0_15px_rgba(255,0,0,0.4)] transition-all active:scale-95 text-sm lg:text-base border border-red-400/30"
+                   >
+                     -${fjWagers[c.id] || 0}
+                   </button>
+                 </div>
+               </div>
+             )}
+
              {/* Host Controls: +100 / -100 when no question is active */}
-             {!activeQuestion && (
+             {!activeQuestion && !fjActive && (
                <div className="flex w-full gap-2 justify-center items-center px-2 pb-1">
                  <button 
                    onClick={() => alterScore(c.id, 100)}
@@ -197,12 +276,12 @@ export default function PlayBoard() {
             {!showAnswer && activeQuestion.media_type && activeQuestion.media_type !== 'none' && activeQuestion.media_url && (
               <div className="flex justify-center items-center w-full max-h-[40vh]">
                 {activeQuestion.media_type === 'image' && (
-                  <img src={activeQuestion.media_url?.startsWith('/') ? `${window.location.origin}${activeQuestion.media_url}` : activeQuestion.media_url} referrerPolicy="no-referrer" alt="Clue Media" className="max-h-[40vh] max-w-full rounded-2xl shadow-2xl border-4 border-jeopardy-gold/40 object-contain" />
+                  <img src={resolveUrl(activeQuestion.media_url)} referrerPolicy="no-referrer" alt="Clue Media" className="max-h-[40vh] max-w-full rounded-2xl shadow-2xl border-4 border-jeopardy-gold/40 object-contain" />
                 )}
                 {activeQuestion.media_type === 'video' && (
                   <div className="max-h-[40vh] max-w-full rounded-2xl overflow-hidden shadow-2xl border-4 border-jeopardy-gold/40 bg-black flex justify-center items-center">
                     <video
-                      src={activeQuestion.media_url?.startsWith('/') ? `${window.location.origin}${activeQuestion.media_url}` : activeQuestion.media_url}
+                      src={resolveUrl(activeQuestion.media_url)}
                       autoPlay
                       controls
                       playsInline
@@ -213,7 +292,7 @@ export default function PlayBoard() {
                 {activeQuestion.media_type === 'audio' && (
                   <div className="w-full max-w-2xl bg-black/50 p-2 rounded-xl border-2 border-jeopardy-gold/40">
                     <audio
-                      src={activeQuestion.media_url?.startsWith('/') ? `${window.location.origin}${activeQuestion.media_url}` : activeQuestion.media_url}
+                      src={resolveUrl(activeQuestion.media_url)}
                       autoPlay
                       controls
                       style={{ width: '100%' }}
@@ -234,12 +313,12 @@ export default function PlayBoard() {
             {showAnswer && activeQuestion.answer_media_type && activeQuestion.answer_media_type !== 'none' && activeQuestion.answer_media_url && (
               <div className="flex justify-center items-center w-full max-h-[40vh]">
                 {activeQuestion.answer_media_type === 'image' && (
-                  <img src={activeQuestion.answer_media_url?.startsWith('/') ? `${window.location.origin}${activeQuestion.answer_media_url}` : activeQuestion.answer_media_url} referrerPolicy="no-referrer" alt="Answer Media" className="max-h-[40vh] max-w-full rounded-2xl shadow-2xl border-4 border-jeopardy-gold/40 object-contain" />
+                  <img src={resolveUrl(activeQuestion.answer_media_url)} referrerPolicy="no-referrer" alt="Answer Media" className="max-h-[40vh] max-w-full rounded-2xl shadow-2xl border-4 border-jeopardy-gold/40 object-contain" />
                 )}
                 {activeQuestion.answer_media_type === 'video' && (
                   <div className="max-h-[40vh] max-w-full rounded-2xl overflow-hidden shadow-2xl border-4 border-jeopardy-gold/40 bg-black flex justify-center items-center">
                     <video
-                      src={activeQuestion.answer_media_url?.startsWith('/') ? `${window.location.origin}${activeQuestion.answer_media_url}` : activeQuestion.answer_media_url}
+                      src={resolveUrl(activeQuestion.answer_media_url)}
                       autoPlay
                       controls
                       playsInline
@@ -299,6 +378,96 @@ export default function PlayBoard() {
                 className="bg-white/20 text-white font-black text-xl px-10 py-3 rounded-xl hover:bg-white/30 transition-all"
               >
                 CLOSE & MARK USED
+              </button>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* FINAL JEOPARDY MODAL OVERLAY */}
+      {fjActive && (
+        <div className="fixed inset-x-0 top-0 bottom-40 z-40 bg-black/95 flex flex-col items-center overflow-y-auto p-8 animate-in zoom-in duration-300">
+          <button 
+            onClick={closeFinalJeopardy}
+            className="absolute top-8 right-8 text-gray-400 hover:text-white p-2 rounded-full hover:bg-white/10 z-50"
+          >
+            <X size={48} />
+          </button>
+
+          {/* Category banner */}
+          {game.final_jeopardy_category && (
+            <div className="mb-6">
+              <div className="bg-jeopardy-blue/70 border-2 border-jeopardy-gold/40 rounded-xl px-10 py-3">
+                <span className="text-jeopardy-gold font-black text-2xl md:text-3xl uppercase tracking-[0.15em]">
+                  {game.final_jeopardy_category}
+                </span>
+              </div>
+            </div>
+          )}
+          
+          <div className="w-full flex flex-col items-center max-w-6xl text-center gap-6 my-auto py-4">
+            {/* Clue media */}
+            {!fjShowAnswer && game.final_jeopardy_media_type && game.final_jeopardy_media_type !== 'none' && game.final_jeopardy_media_url && (
+              <div className="flex justify-center items-center w-full max-h-[40vh]">
+                {game.final_jeopardy_media_type === 'image' && (
+                  <img src={resolveUrl(game.final_jeopardy_media_url)} referrerPolicy="no-referrer" alt="Final Jeopardy Clue" className="max-h-[40vh] max-w-full rounded-2xl shadow-2xl border-4 border-jeopardy-gold/40 object-contain" />
+                )}
+                {game.final_jeopardy_media_type === 'video' && (
+                  <div className="max-h-[40vh] max-w-full rounded-2xl overflow-hidden shadow-2xl border-4 border-jeopardy-gold/40 bg-black flex justify-center items-center">
+                    <video src={resolveUrl(game.final_jeopardy_media_url)} autoPlay controls playsInline style={{ maxWidth: '100%', maxHeight: '40vh' }} />
+                  </div>
+                )}
+                {game.final_jeopardy_media_type === 'audio' && (
+                  <div className="w-full max-w-2xl bg-black/50 p-2 rounded-xl border-2 border-jeopardy-gold/40">
+                    <audio src={resolveUrl(game.final_jeopardy_media_url)} autoPlay controls style={{ width: '100%' }} />
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Clue text */}
+            {!fjShowAnswer && game.final_jeopardy_clue && (
+              <h2 className={`${game.final_jeopardy_media_type && game.final_jeopardy_media_type !== 'none' ? 'text-4xl md:text-5xl' : 'text-6xl md:text-8xl'} font-bold uppercase text-white tracking-wide`} style={{ textShadow: '4px 4px 0 #000' }}>
+                {game.final_jeopardy_clue}
+              </h2>
+            )}
+
+            {/* Answer media */}
+            {fjShowAnswer && game.final_jeopardy_answer_media_type && game.final_jeopardy_answer_media_type !== 'none' && game.final_jeopardy_answer_media_url && (
+              <div className="flex justify-center items-center w-full max-h-[40vh]">
+                {game.final_jeopardy_answer_media_type === 'image' && (
+                  <img src={resolveUrl(game.final_jeopardy_answer_media_url)} referrerPolicy="no-referrer" alt="Final Jeopardy Answer" className="max-h-[40vh] max-w-full rounded-2xl shadow-2xl border-4 border-jeopardy-gold/40 object-contain" />
+                )}
+                {game.final_jeopardy_answer_media_type === 'video' && (
+                  <div className="max-h-[40vh] max-w-full rounded-2xl overflow-hidden shadow-2xl border-4 border-jeopardy-gold/40 bg-black flex justify-center items-center">
+                    <video src={resolveUrl(game.final_jeopardy_answer_media_url)} autoPlay controls playsInline style={{ maxWidth: '100%', maxHeight: '40vh' }} />
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Answer text */}
+            {fjShowAnswer && game.final_jeopardy_answer && (
+              <h2 className={`${game.final_jeopardy_answer_media_type && game.final_jeopardy_answer_media_type !== 'none' ? 'text-4xl md:text-5xl' : 'text-6xl md:text-8xl'} font-bold uppercase text-white tracking-wide`} style={{ textShadow: '4px 4px 0 #000' }}>
+                {game.final_jeopardy_answer}
+              </h2>
+            )}
+          </div>
+
+          <div className="mt-8 space-y-4">
+            {!fjShowAnswer ? (
+              <button
+                onClick={() => setFjShowAnswer(true)}
+                className="bg-jeopardy-gold text-jeopardy-dark font-black text-2xl px-12 py-4 rounded-xl hover:bg-yellow-400 hover:scale-105 transition-all shadow-[0_0_30px_rgba(255,204,0,0.5)]"
+              >
+                REVEAL ANSWER
+              </button>
+            ) : (
+              <button
+                onClick={closeFinalJeopardy}
+                className="bg-white/20 text-white font-black text-xl px-10 py-3 rounded-xl hover:bg-white/30 transition-all"
+              >
+                CLOSE FINAL JEOPARDY
               </button>
             )}
           </div>

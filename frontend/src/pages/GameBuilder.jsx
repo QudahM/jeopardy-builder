@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { Save, ArrowLeft, Plus, Settings } from 'lucide-react';
+import { Save, ArrowLeft, Plus, Settings, Trophy } from 'lucide-react';
 import { createGame, updateGame, uploadMedia, getGame } from '../api/client';
 
 export default function GameBuilder() {
@@ -37,6 +37,22 @@ export default function GameBuilder() {
     }))
   );
 
+  const [finalJeopardy, setFinalJeopardy] = useState({
+    category: '',
+    clue: '',
+    answer: '',
+    media_type: 'none',
+    media_url: '',
+    media_file: null,
+    answer_media_type: 'none',
+    answer_media_url: '',
+    answer_media_file: null,
+  });
+
+  const handleFinalJeopardyChange = (field, value) => {
+    setFinalJeopardy(prev => ({ ...prev, [field]: value }));
+  };
+
   // Load existing game data in edit mode
   useEffect(() => {
     if (!editId) return;
@@ -62,6 +78,17 @@ export default function GameBuilder() {
             })),
           }))
         );
+        setFinalJeopardy({
+          category: game.final_jeopardy_category || '',
+          clue: game.final_jeopardy_clue || '',
+          answer: game.final_jeopardy_answer || '',
+          media_type: game.final_jeopardy_media_type || 'none',
+          media_url: game.final_jeopardy_media_url || '',
+          media_file: null,
+          answer_media_type: game.final_jeopardy_answer_media_type || 'none',
+          answer_media_url: game.final_jeopardy_answer_media_url || '',
+          answer_media_file: null,
+        });
       } catch (err) {
         alert('Error loading game');
         console.error(err);
@@ -209,9 +236,34 @@ export default function GameBuilder() {
         }
       }
 
+      // Upload Final Jeopardy media
+      const fjPayload = { ...finalJeopardy };
+      if (fjPayload.media_type !== 'none' && fjPayload.media_file) {
+        const result = await uploadMedia(fjPayload.media_file);
+        fjPayload.media_url = result.url;
+      } else if (fjPayload.media_type !== 'none' && !fjPayload.media_url) {
+        fjPayload.media_type = 'none';
+      }
+      delete fjPayload.media_file;
+
+      if (fjPayload.answer_media_type !== 'none' && fjPayload.answer_media_file) {
+        const result = await uploadMedia(fjPayload.answer_media_file);
+        fjPayload.answer_media_url = result.url;
+      } else if (fjPayload.answer_media_type !== 'none' && !fjPayload.answer_media_url) {
+        fjPayload.answer_media_type = 'none';
+      }
+      delete fjPayload.answer_media_file;
+
       const payload = {
         ...config,
-        categories: payloadCats
+        categories: payloadCats,
+        final_jeopardy_category: fjPayload.category,
+        final_jeopardy_clue: fjPayload.clue,
+        final_jeopardy_answer: fjPayload.answer,
+        final_jeopardy_media_type: fjPayload.media_type,
+        final_jeopardy_media_url: fjPayload.media_url,
+        final_jeopardy_answer_media_type: fjPayload.answer_media_type,
+        final_jeopardy_answer_media_url: fjPayload.answer_media_url,
       };
 
       if (isEditMode) {
@@ -464,6 +516,129 @@ export default function GameBuilder() {
                 </div>
               </div>
             ))}
+          </div>
+        </section>
+
+        {/* Final Jeopardy Section */}
+        <section className="bg-linear-to-r from-red-900/30 to-red-800/20 p-10 rounded-3xl border border-red-500/30 backdrop-blur-md shadow-2xl relative overflow-hidden">
+          {/* Decorative element */}
+          <div className="absolute top-0 right-0 w-64 h-64 bg-jeopardy-gold/5 rounded-full blur-3xl -mr-32 -mt-32"></div>
+          
+          <div className="flex flex-col md:flex-row items-center justify-between gap-4 mb-10 relative z-10">
+            <div className="flex items-center gap-4">
+              <div className="p-3 bg-jeopardy-gold/10 rounded-2xl border border-jeopardy-gold/20">
+                <Trophy className="text-jeopardy-gold" size={32} />
+              </div>
+              <div>
+                <h2 className="text-3xl font-bold text-white tracking-tight">Final Jeopardy</h2>
+                <p className="text-sm text-gray-400 mt-1">Configure the climactic final question of your game</p>
+              </div>
+            </div>
+            <div className="px-4 py-2 bg-black/30 rounded-full border border-white/10 backdrop-blur-sm text-xs font-medium text-gray-400 whitespace-nowrap">
+               Optional — wagers set by host during play
+            </div>
+          </div>
+
+          <div className="space-y-10 relative z-10">
+            {/* Row 1: Category Name - Centered focus */}
+            <div className="max-w-3xl mx-auto space-y-3">
+              <div className="flex justify-center">
+                <label className="text-xs text-jeopardy-gold font-bold uppercase tracking-[0.3em] mb-1">Final Category</label>
+              </div>
+              <input
+                type="text"
+                value={finalJeopardy.category}
+                onChange={(e) => handleFinalJeopardyChange('category', e.target.value)}
+                className="w-full bg-black/40 border border-white/10 rounded-2xl p-5 text-white text-center font-black text-2xl uppercase tracking-widest focus:outline-none focus:ring-2 focus:ring-jeopardy-gold/50 focus:border-jeopardy-gold transition shadow-inner placeholder:text-white/10"
+                placeholder="ENTER CATEGORY NAME..."
+              />
+            </div>
+
+            {/* Row 2: Clue and Answer mirrored cards */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+              {/* Clue Card */}
+              <div className="bg-black/40 p-8 rounded-3xl border border-white/5 space-y-5 shadow-xl hover:border-white/10 transition group">
+                <div className="flex justify-between items-center">
+                  <label className="text-xs text-blue-300 font-bold uppercase tracking-widest">The Clue</label>
+                  <select
+                    value={finalJeopardy.media_type || 'none'}
+                    onChange={(e) => handleFinalJeopardyChange('media_type', e.target.value)}
+                    className="bg-jeopardy-blue/60 border border-jeopardy-gold/30 rounded-xl px-4 py-2 text-xs text-jeopardy-gold font-bold focus:outline-none focus:ring-1 focus:ring-jeopardy-gold cursor-pointer appearance-none pr-8 transition"
+                    style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23ffcc00' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E")`, backgroundRepeat: 'no-repeat', backgroundPosition: 'right 10px center' }}
+                  >
+                    <option value="none">Text Only</option>
+                    <option value="image">Image</option>
+                    <option value="audio">Audio</option>
+                    <option value="video">Video</option>
+                  </select>
+                </div>
+                
+                {(finalJeopardy.media_type && finalJeopardy.media_type !== 'none') && (
+                  <div className="animate-in fade-in slide-in-from-top-1 duration-200">
+                    {finalJeopardy.media_url && !finalJeopardy.media_file && (
+                      <div className="text-xs text-green-400 mb-2 font-medium flex items-center gap-1.5 px-3 py-1 bg-green-400/5 rounded-full border border-green-400/10 w-fit">
+                        <span className="w-1.5 h-1.5 bg-green-400 rounded-full animate-pulse"></span>
+                        Current: {finalJeopardy.media_url.split('/').pop().replace(/^\d+_/, '')}
+                      </div>
+                    )}
+                    <input
+                      type="file"
+                      accept={getAcceptTypes(finalJeopardy.media_type)}
+                      onChange={(e) => handleFinalJeopardyChange('media_file', e.target.files[0])}
+                      className="w-full bg-white/5 rounded-xl p-3 text-xs text-white focus:outline-none focus:border-jeopardy-gold block file:mr-4 file:py-1.5 file:px-4 file:rounded-full file:border-0 file:text-[10px] file:font-black file:uppercase file:bg-jeopardy-gold file:text-jeopardy-dark hover:file:bg-yellow-400 transition"
+                    />
+                  </div>
+                )}
+                
+                <textarea
+                  value={finalJeopardy.clue}
+                  onChange={(e) => handleFinalJeopardyChange('clue', e.target.value)}
+                  className="w-full bg-white/5 rounded-2xl p-4 text-base text-white resize-none h-32 focus:outline-none focus:ring-1 focus:ring-jeopardy-gold/30 focus:bg-white/10 transition placeholder:text-white/20"
+                  placeholder="Enter the cryptic clue text..."
+                />
+              </div>
+
+              {/* Answer Card */}
+              <div className="bg-black/40 p-8 rounded-3xl border border-white/5 space-y-5 shadow-xl hover:border-white/10 transition group">
+                <div className="flex justify-between items-center">
+                  <label className="text-xs text-jeopardy-gold font-bold uppercase tracking-widest">The Answer</label>
+                  <select
+                    value={finalJeopardy.answer_media_type || 'none'}
+                    onChange={(e) => handleFinalJeopardyChange('answer_media_type', e.target.value)}
+                    className="bg-jeopardy-blue/60 border border-jeopardy-gold/30 rounded-xl px-4 py-2 text-xs text-jeopardy-gold font-bold focus:outline-none focus:ring-1 focus:ring-jeopardy-gold cursor-pointer appearance-none pr-8 transition"
+                    style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23ffcc00' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E")`, backgroundRepeat: 'no-repeat', backgroundPosition: 'right 10px center' }}
+                  >
+                    <option value="none">Text Only</option>
+                    <option value="image">Image</option>
+                    <option value="video">Video</option>
+                  </select>
+                </div>
+
+                {(finalJeopardy.answer_media_type && finalJeopardy.answer_media_type !== 'none') && (
+                  <div className="animate-in fade-in slide-in-from-top-1 duration-200">
+                    {finalJeopardy.answer_media_url && !finalJeopardy.answer_media_file && (
+                      <div className="text-xs text-green-400 mb-2 font-medium flex items-center gap-1.5 px-3 py-1 bg-green-400/5 rounded-full border border-green-400/10 w-fit">
+                        <span className="w-1.5 h-1.5 bg-green-400 rounded-full animate-pulse"></span>
+                        Current: {finalJeopardy.answer_media_url.split('/').pop().replace(/^\d+_/, '')}
+                      </div>
+                    )}
+                    <input
+                      type="file"
+                      accept={getAcceptTypes(finalJeopardy.answer_media_type)}
+                      onChange={(e) => handleFinalJeopardyChange('answer_media_file', e.target.files[0])}
+                      className="w-full bg-white/5 rounded-xl p-3 text-xs text-white focus:outline-none focus:border-jeopardy-gold block file:mr-4 file:py-1.5 file:px-4 file:rounded-full file:border-0 file:text-[10px] file:font-black file:uppercase file:bg-jeopardy-gold file:text-jeopardy-dark hover:file:bg-yellow-400 transition"
+                    />
+                  </div>
+                )}
+                
+                <textarea
+                  value={finalJeopardy.answer}
+                  onChange={(e) => handleFinalJeopardyChange('answer', e.target.value)}
+                  className="w-full bg-white/5 rounded-2xl p-4 text-base text-white resize-none h-32 focus:outline-none focus:ring-1 focus:ring-jeopardy-gold/30 focus:bg-white/10 transition placeholder:text-white/20"
+                  placeholder="What is the correct response? (the 'What is...' format)"
+                />
+              </div>
+            </div>
           </div>
         </section>
 
