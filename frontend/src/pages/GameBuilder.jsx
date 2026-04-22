@@ -520,123 +520,210 @@ export default function GameBuilder() {
         </section>
 
         {/* Final Jeopardy Section */}
-        <section className="bg-linear-to-r from-red-900/30 to-red-800/20 p-10 rounded-3xl border border-red-500/30 backdrop-blur-md shadow-2xl relative overflow-hidden">
-          {/* Decorative element */}
-          <div className="absolute top-0 right-0 w-64 h-64 bg-jeopardy-gold/5 rounded-full blur-3xl -mr-32 -mt-32"></div>
-          
-          <div className="flex flex-col md:flex-row items-center justify-between gap-4 mb-10 relative z-10">
-            <div className="flex items-center gap-4">
-              <div className="p-3 bg-jeopardy-gold/10 rounded-2xl border border-jeopardy-gold/20">
-                <Trophy className="text-jeopardy-gold" size={32} />
-              </div>
-              <div>
-                <h2 className="text-3xl font-bold text-white tracking-tight">Final Jeopardy</h2>
-                <p className="text-sm text-gray-400 mt-1">Configure the climactic final question of your game</p>
-              </div>
-            </div>
-            <div className="px-4 py-2 bg-black/30 rounded-full border border-white/10 backdrop-blur-sm text-xs font-medium text-gray-400 whitespace-nowrap">
-               Optional — wagers set by host during play
-            </div>
-          </div>
+        <section className="relative overflow-hidden rounded-3xl border border-red-500/25 bg-gradient-to-r from-red-950/40 via-purple-950/60 to-red-900/30 p-6 shadow-2xl backdrop-blur-md md:p-8 xl:p-10">
+          {/* Decorative glow */}
+          <div className="pointer-events-none absolute -right-24 -top-24 h-64 w-64 rounded-full bg-jeopardy-gold/5 blur-3xl"></div>
+          <div className="pointer-events-none absolute -left-24 bottom-0 h-56 w-56 rounded-full bg-blue-500/5 blur-3xl"></div>
 
-          <div className="space-y-10 relative z-10">
-            {/* Row 1: Category Name - Centered focus */}
-            <div className="max-w-3xl mx-auto space-y-3">
-              <div className="flex justify-center">
-                <label className="text-xs text-jeopardy-gold font-bold uppercase tracking-[0.3em] mb-1">Final Category</label>
-              </div>
-              <input
-                type="text"
-                value={finalJeopardy.category}
-                onChange={(e) => handleFinalJeopardyChange('category', e.target.value)}
-                className="w-full bg-black/40 border border-white/10 rounded-2xl p-5 text-white text-center font-black text-2xl uppercase tracking-widest focus:outline-none focus:ring-2 focus:ring-jeopardy-gold/50 focus:border-jeopardy-gold transition shadow-inner placeholder:text-white/10"
-                placeholder="ENTER CATEGORY NAME..."
-              />
-            </div>
-
-            {/* Row 2: Clue and Answer mirrored cards */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-              {/* Clue Card */}
-              <div className="bg-black/40 p-8 rounded-3xl border border-white/5 space-y-5 shadow-xl hover:border-white/10 transition group">
-                <div className="flex justify-between items-center">
-                  <label className="text-xs text-blue-300 font-bold uppercase tracking-widest">The Clue</label>
-                  <select
-                    value={finalJeopardy.media_type || 'none'}
-                    onChange={(e) => handleFinalJeopardyChange('media_type', e.target.value)}
-                    className="bg-jeopardy-blue/60 border border-jeopardy-gold/30 rounded-xl px-4 py-2 text-xs text-jeopardy-gold font-bold focus:outline-none focus:ring-1 focus:ring-jeopardy-gold cursor-pointer appearance-none pr-8 transition"
-                    style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23ffcc00' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E")`, backgroundRepeat: 'no-repeat', backgroundPosition: 'right 10px center' }}
-                  >
-                    <option value="none">Text Only</option>
-                    <option value="image">Image</option>
-                    <option value="audio">Audio</option>
-                    <option value="video">Video</option>
-                  </select>
+          <div className="relative z-10 space-y-8">
+            {/* Header */}
+            <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+              <div className="flex items-start gap-4">
+                <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl border border-jeopardy-gold/20 bg-jeopardy-gold/10 shadow-inner">
+                  <Trophy className="text-jeopardy-gold" size={28} />
                 </div>
-                
-                {(finalJeopardy.media_type && finalJeopardy.media_type !== 'none') && (
-                  <div className="animate-in fade-in slide-in-from-top-1 duration-200">
-                    {finalJeopardy.media_url && !finalJeopardy.media_file && (
-                      <div className="text-xs text-green-400 mb-2 font-medium flex items-center gap-1.5 px-3 py-1 bg-green-400/5 rounded-full border border-green-400/10 w-fit">
-                        <span className="w-1.5 h-1.5 bg-green-400 rounded-full animate-pulse"></span>
-                        Current: {finalJeopardy.media_url.split('/').pop().replace(/^\d+_/, '')}
-                      </div>
-                    )}
-                    <input
-                      type="file"
-                      accept={getAcceptTypes(finalJeopardy.media_type)}
-                      onChange={(e) => handleFinalJeopardyChange('media_file', e.target.files[0])}
-                      className="w-full bg-white/5 rounded-xl p-3 text-xs text-white focus:outline-none focus:border-jeopardy-gold block file:mr-4 file:py-1.5 file:px-4 file:rounded-full file:border-0 file:text-[10px] file:font-black file:uppercase file:bg-jeopardy-gold file:text-jeopardy-dark hover:file:bg-yellow-400 transition"
-                    />
+
+                <div className="space-y-1">
+                  <div className="flex flex-wrap items-center gap-3">
+                    <h2 className="text-2xl font-black tracking-tight text-white md:text-3xl">
+                      Final Jeopardy
+                    </h2>
+                    <span className="rounded-full border border-white/10 bg-black/25 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-gray-400">
+                      Optional
+                    </span>
                   </div>
-                )}
-                
-                <textarea
-                  value={finalJeopardy.clue}
-                  onChange={(e) => handleFinalJeopardyChange('clue', e.target.value)}
-                  className="w-full bg-white/5 rounded-2xl p-4 text-base text-white resize-none h-32 focus:outline-none focus:ring-1 focus:ring-jeopardy-gold/30 focus:bg-white/10 transition placeholder:text-white/20"
-                  placeholder="Enter the cryptic clue text..."
+                  <p className="max-w-2xl text-sm leading-6 text-gray-400">
+                    Set the category, clue, and accepted response for the final round.
+                    Wagers can still be handled by the host during gameplay.
+                  </p>
+                </div>
+              </div>
+
+              <div className="self-start rounded-2xl border border-white/10 bg-black/25 px-4 py-3 text-xs leading-5 text-gray-400 lg:self-auto">
+                <span className="block font-semibold uppercase tracking-[0.18em] text-gray-300">
+                  Host Note
+                </span>
+                <span className="block mt-1">
+                  Wager settings are not required here.
+                </span>
+              </div>
+            </div>
+
+            {/* Category block */}
+            <div className="rounded-3xl border border-white/8 bg-black/25 p-5 shadow-inner md:p-6">
+              <div className="mx-auto max-w-4xl space-y-3">
+                <div className="flex items-center justify-between gap-3">
+                  <label className="text-xs font-bold uppercase tracking-[0.24em] text-jeopardy-gold">
+                    Final Category
+                  </label>
+                  <span className="text-[11px] uppercase tracking-[0.16em] text-gray-500">
+                    Center stage field
+                  </span>
+                </div>
+
+                <input
+                  type="text"
+                  value={finalJeopardy.category}
+                  onChange={(e) => handleFinalJeopardyChange('category', e.target.value)}
+                  className="w-full rounded-2xl border border-white/10 bg-black/40 px-5 py-4 text-center text-xl font-black uppercase tracking-[0.22em] text-white shadow-inner transition placeholder:text-white/15 focus:border-jeopardy-gold focus:outline-none focus:ring-2 focus:ring-jeopardy-gold/35 md:px-6 md:py-5 md:text-2xl"
+                  placeholder="ENTER FINAL JEOPARDY CATEGORY..."
                 />
+
+                <p className="text-center text-xs text-gray-500">
+                  Keep this short and recognizable so contestants can process it quickly.
+                </p>
+              </div>
+            </div>
+
+            {/* Clue + Answer mirrored layout */}
+            <div className="grid grid-cols-1 gap-6 xl:grid-cols-2">
+              {/* Clue Card */}
+              <div className="flex h-full flex-col rounded-3xl border border-white/8 bg-black/35 p-6 shadow-xl transition hover:border-white/15 md:p-7">
+                <div className="mb-5 flex items-start justify-between gap-4">
+                  <div className="space-y-1">
+                    <label className="text-xs font-bold uppercase tracking-[0.2em] text-blue-300">
+                      Final Clue
+                    </label>
+                    <p className="text-xs leading-5 text-gray-500">
+                      Add the clue text and optionally attach supporting media.
+                    </p>
+                  </div>
+
+                  <div className="min-w-[140px] shrink-0">
+                    <select
+                      value={finalJeopardy.media_type || 'none'}
+                      onChange={(e) => handleFinalJeopardyChange('media_type', e.target.value)}
+                      className="w-full cursor-pointer appearance-none rounded-xl border border-jeopardy-gold/30 bg-jeopardy-blue/60 px-4 py-2.5 pr-9 text-xs font-bold text-jeopardy-gold transition focus:outline-none focus:ring-2 focus:ring-jeopardy-gold/35"
+                      style={{
+                        backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23ffcc00' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E")`,
+                        backgroundRepeat: 'no-repeat',
+                        backgroundPosition: 'right 12px center',
+                      }}
+                    >
+                      <option value="none">Text Only</option>
+                      <option value="image">Image</option>
+                      <option value="audio">Audio</option>
+                      <option value="video">Video</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div className="flex flex-1 flex-col gap-4">
+                  {(finalJeopardy.media_type && finalJeopardy.media_type !== 'none') && (
+                    <div className="rounded-2xl border border-white/8 bg-white/5 p-4 animate-in fade-in slide-in-from-top-1 duration-200">
+                      <div className="mb-3 flex items-center justify-between gap-3">
+                        <span className="text-[11px] font-semibold uppercase tracking-[0.16em] text-gray-400">
+                          Clue Media
+                        </span>
+
+                        {finalJeopardy.media_url && !finalJeopardy.media_file && (
+                          <div className="flex w-fit items-center gap-1.5 rounded-full border border-green-400/10 bg-green-400/5 px-3 py-1 text-xs font-medium text-green-400">
+                            <span className="h-1.5 w-1.5 rounded-full bg-green-400 animate-pulse"></span>
+                            Current: {finalJeopardy.media_url.split('/').pop().replace(/^\d+_/, '')}
+                          </div>
+                        )}
+                      </div>
+
+                      <input
+                        type="file"
+                        accept={getAcceptTypes(finalJeopardy.media_type)}
+                        onChange={(e) => handleFinalJeopardyChange('media_file', e.target.files[0])}
+                        className="block w-full rounded-xl border border-white/8 bg-black/20 p-3 text-xs text-white file:mr-4 file:rounded-full file:border-0 file:bg-jeopardy-gold file:px-4 file:py-2 file:text-[10px] file:font-black file:uppercase file:text-jeopardy-dark transition hover:file:bg-yellow-400 focus:outline-none"
+                      />
+                    </div>
+                  )}
+
+                  <div className="flex flex-1 flex-col">
+                    <textarea
+                      value={finalJeopardy.clue}
+                      onChange={(e) => handleFinalJeopardyChange('clue', e.target.value)}
+                      className="min-h-[220px] w-full flex-1 resize-none rounded-2xl border border-white/8 bg-white/5 p-4 text-base text-white transition placeholder:text-white/20 focus:border-jeopardy-gold/40 focus:bg-white/10 focus:outline-none focus:ring-2 focus:ring-jeopardy-gold/25"
+                      placeholder="Enter the Final Jeopardy clue..."
+                    />
+                    <p className="mt-3 text-xs leading-5 text-gray-500">
+                      Aim for enough detail to challenge players without overwhelming the screen.
+                    </p>
+                  </div>
+                </div>
               </div>
 
               {/* Answer Card */}
-              <div className="bg-black/40 p-8 rounded-3xl border border-white/5 space-y-5 shadow-xl hover:border-white/10 transition group">
-                <div className="flex justify-between items-center">
-                  <label className="text-xs text-jeopardy-gold font-bold uppercase tracking-widest">The Answer</label>
-                  <select
-                    value={finalJeopardy.answer_media_type || 'none'}
-                    onChange={(e) => handleFinalJeopardyChange('answer_media_type', e.target.value)}
-                    className="bg-jeopardy-blue/60 border border-jeopardy-gold/30 rounded-xl px-4 py-2 text-xs text-jeopardy-gold font-bold focus:outline-none focus:ring-1 focus:ring-jeopardy-gold cursor-pointer appearance-none pr-8 transition"
-                    style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23ffcc00' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E")`, backgroundRepeat: 'no-repeat', backgroundPosition: 'right 10px center' }}
-                  >
-                    <option value="none">Text Only</option>
-                    <option value="image">Image</option>
-                    <option value="video">Video</option>
-                  </select>
+              <div className="flex h-full flex-col rounded-3xl border border-white/8 bg-black/35 p-6 shadow-xl transition hover:border-white/15 md:p-7">
+                <div className="mb-5 flex items-start justify-between gap-4">
+                  <div className="space-y-1">
+                    <label className="text-xs font-bold uppercase tracking-[0.2em] text-jeopardy-gold">
+                      Accepted Response
+                    </label>
+                    <p className="text-xs leading-5 text-gray-500">
+                      Define the correct response and attach answer media if needed.
+                    </p>
+                  </div>
+
+                  <div className="min-w-[140px] shrink-0">
+                    <select
+                      value={finalJeopardy.answer_media_type || 'none'}
+                      onChange={(e) => handleFinalJeopardyChange('answer_media_type', e.target.value)}
+                      className="w-full cursor-pointer appearance-none rounded-xl border border-jeopardy-gold/30 bg-jeopardy-blue/60 px-4 py-2.5 pr-9 text-xs font-bold text-jeopardy-gold transition focus:outline-none focus:ring-2 focus:ring-jeopardy-gold/35"
+                      style={{
+                        backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23ffcc00' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E")`,
+                        backgroundRepeat: 'no-repeat',
+                        backgroundPosition: 'right 12px center',
+                      }}
+                    >
+                      <option value="none">Text Only</option>
+                      <option value="image">Image</option>
+                      <option value="video">Video</option>
+                    </select>
+                  </div>
                 </div>
 
-                {(finalJeopardy.answer_media_type && finalJeopardy.answer_media_type !== 'none') && (
-                  <div className="animate-in fade-in slide-in-from-top-1 duration-200">
-                    {finalJeopardy.answer_media_url && !finalJeopardy.answer_media_file && (
-                      <div className="text-xs text-green-400 mb-2 font-medium flex items-center gap-1.5 px-3 py-1 bg-green-400/5 rounded-full border border-green-400/10 w-fit">
-                        <span className="w-1.5 h-1.5 bg-green-400 rounded-full animate-pulse"></span>
-                        Current: {finalJeopardy.answer_media_url.split('/').pop().replace(/^\d+_/, '')}
+                <div className="flex flex-1 flex-col gap-4">
+                  {(finalJeopardy.answer_media_type && finalJeopardy.answer_media_type !== 'none') && (
+                    <div className="rounded-2xl border border-white/8 bg-white/5 p-4 animate-in fade-in slide-in-from-top-1 duration-200">
+                      <div className="mb-3 flex items-center justify-between gap-3">
+                        <span className="text-[11px] font-semibold uppercase tracking-[0.16em] text-gray-400">
+                          Answer Media
+                        </span>
+
+                        {finalJeopardy.answer_media_url && !finalJeopardy.answer_media_file && (
+                          <div className="flex w-fit items-center gap-1.5 rounded-full border border-green-400/10 bg-green-400/5 px-3 py-1 text-xs font-medium text-green-400">
+                            <span className="h-1.5 w-1.5 rounded-full bg-green-400 animate-pulse"></span>
+                            Current: {finalJeopardy.answer_media_url.split('/').pop().replace(/^\d+_/, '')}
+                          </div>
+                        )}
                       </div>
-                    )}
-                    <input
-                      type="file"
-                      accept={getAcceptTypes(finalJeopardy.answer_media_type)}
-                      onChange={(e) => handleFinalJeopardyChange('answer_media_file', e.target.files[0])}
-                      className="w-full bg-white/5 rounded-xl p-3 text-xs text-white focus:outline-none focus:border-jeopardy-gold block file:mr-4 file:py-1.5 file:px-4 file:rounded-full file:border-0 file:text-[10px] file:font-black file:uppercase file:bg-jeopardy-gold file:text-jeopardy-dark hover:file:bg-yellow-400 transition"
+
+                      <input
+                        type="file"
+                        accept={getAcceptTypes(finalJeopardy.answer_media_type)}
+                        onChange={(e) => handleFinalJeopardyChange('answer_media_file', e.target.files[0])}
+                        className="block w-full rounded-xl border border-white/8 bg-black/20 p-3 text-xs text-white file:mr-4 file:rounded-full file:border-0 file:bg-jeopardy-gold file:px-4 file:py-2 file:text-[10px] file:font-black file:uppercase file:text-jeopardy-dark transition hover:file:bg-yellow-400 focus:outline-none"
+                      />
+                    </div>
+                  )}
+
+                  <div className="flex flex-1 flex-col">
+                    <textarea
+                      value={finalJeopardy.answer}
+                      onChange={(e) => handleFinalJeopardyChange('answer', e.target.value)}
+                      className="min-h-[220px] w-full flex-1 resize-none rounded-2xl border border-white/8 bg-white/5 p-4 text-base text-white transition placeholder:text-white/20 focus:border-jeopardy-gold/40 focus:bg-white/10 focus:outline-none focus:ring-2 focus:ring-jeopardy-gold/25"
+                      placeholder="What is the correct response?"
                     />
+                    <p className="mt-3 text-xs leading-5 text-gray-500">
+                      Keep the expected response concise and consistent with your game rules.
+                    </p>
                   </div>
-                )}
-                
-                <textarea
-                  value={finalJeopardy.answer}
-                  onChange={(e) => handleFinalJeopardyChange('answer', e.target.value)}
-                  className="w-full bg-white/5 rounded-2xl p-4 text-base text-white resize-none h-32 focus:outline-none focus:ring-1 focus:ring-jeopardy-gold/30 focus:bg-white/10 transition placeholder:text-white/20"
-                  placeholder="What is the correct response? (the 'What is...' format)"
-                />
+                </div>
               </div>
             </div>
           </div>
