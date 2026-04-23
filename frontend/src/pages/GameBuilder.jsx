@@ -3,6 +3,28 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { Save, ArrowLeft, Plus, Settings, Trophy } from 'lucide-react';
 import { createGame, updateGame, uploadMedia, getGame } from '../api/client';
 
+const createEmptyQuestion = (tier, basePointValue) => ({
+  tier,
+  point_value: (tier + 1) * basePointValue,
+  clue: '',
+  media_type: 'none',
+  media_url: '',
+  media_file: null,
+  options: '',
+  answer: '',
+  answer_media_type: 'none',
+  answer_media_url: '',
+  answer_media_file: null,
+});
+
+const createDefaultCategory = (index, questionCount, basePointValue) => ({
+  name: `Category ${index + 1}`,
+  image_url: '',
+  image_file: null,
+  position: index,
+  questions: Array(questionCount).fill(null).map((_, questionIndex) => createEmptyQuestion(questionIndex, basePointValue)),
+});
+
 export default function GameBuilder() {
   const navigate = useNavigate();
   const { id: editId } = useParams();
@@ -18,23 +40,7 @@ export default function GameBuilder() {
   });
 
   const [categories, setCategories] = useState(
-    Array(config.num_categories).fill(null).map((_, i) => ({
-      name: `Category ${i + 1}`,
-      position: i,
-      questions: Array(config.questions_per_category).fill(null).map((_, j) => ({
-        tier: j,
-        point_value: (j + 1) * config.base_point_value,
-        clue: '',
-        media_type: 'none',
-        media_url: '',
-        media_file: null,
-        options: '',
-        answer: '',
-        answer_media_type: 'none',
-        answer_media_url: '',
-        answer_media_file: null,
-      })),
-    }))
+    Array(config.num_categories).fill(null).map((_, i) => createDefaultCategory(i, config.questions_per_category, config.base_point_value))
   );
 
   const [finalJeopardy, setFinalJeopardy] = useState({
@@ -71,6 +77,8 @@ export default function GameBuilder() {
         setCategories(
           game.categories.map(cat => ({
             ...cat,
+            image_url: cat.image_url || '',
+            image_file: null,
             questions: cat.questions.map(q => ({
               ...q,
               media_file: null,
@@ -111,23 +119,9 @@ export default function GameBuilder() {
       const numQ = name === 'questions_per_category' ? numValue : config.questions_per_category;
       
       setCategories(
-        Array(numCat).fill(null).map((_, i) => ({
-          name: `Category ${i + 1}`,
-          position: i,
-          questions: Array(numQ).fill(null).map((_, j) => ({
-            tier: j,
-            point_value: (j + 1) * (name === 'base_point_value' ? numValue : config.base_point_value),
-            clue: '',
-            media_type: 'none',
-            media_url: '',
-            media_file: null,
-            options: '',
-            answer: '',
-            answer_media_type: 'none',
-            answer_media_url: '',
-            answer_media_file: null,
-          })),
-        }))
+        Array(numCat).fill(null).map((_, i) =>
+          createDefaultCategory(i, numQ, name === 'base_point_value' ? numValue : config.base_point_value)
+        )
       );
     }
   };
@@ -146,6 +140,19 @@ export default function GameBuilder() {
   const handleCategoryNameChange = (catIdx, name) => {
     const newCats = [...categories];
     newCats[catIdx].name = name;
+    setCategories(newCats);
+  };
+
+  const handleCategoryImageChange = (catIdx, file) => {
+    const newCats = [...categories];
+    newCats[catIdx].image_file = file || null;
+    setCategories(newCats);
+  };
+
+  const removeCategoryImage = (catIdx) => {
+    const newCats = [...categories];
+    newCats[catIdx].image_url = '';
+    newCats[catIdx].image_file = null;
     setCategories(newCats);
   };
 
@@ -215,6 +222,12 @@ export default function GameBuilder() {
 
       // Upload all new files before finalizing the payload
       for (let i = 0; i < payloadCats.length; i++) {
+        if (payloadCats[i].image_file) {
+          const result = await uploadMedia(payloadCats[i].image_file);
+          payloadCats[i].image_url = result.url;
+        }
+        delete payloadCats[i].image_file;
+
         for (let j = 0; j < payloadCats[i].questions.length; j++) {
           let q = payloadCats[i].questions[j];
           if (q.media_type !== 'none' && q.media_file) {
@@ -372,6 +385,46 @@ export default function GameBuilder() {
                   placeholder="CATEGORY NAME"
                   required
                 />
+
+                <div className="mb-4 rounded-xl border border-white/10 bg-black/20 p-3">
+                  <div className="mb-2 flex items-center justify-between gap-3">
+                    <label className="text-xs font-semibold uppercase tracking-[0.18em] text-gray-400">
+                      Category Image
+                    </label>
+                    {(cat.image_url || cat.image_file) && (
+                      <button
+                        type="button"
+                        onClick={() => removeCategoryImage(catIdx)}
+                        className="text-xs font-semibold uppercase tracking-wide text-red-300 transition hover:text-red-200"
+                      >
+                        Remove
+                      </button>
+                    )}
+                  </div>
+
+                  {(cat.image_url || cat.image_file) && (
+                    <div className="mb-3 overflow-hidden rounded-lg border border-white/10 bg-jeopardy-blue/40">
+                      <img
+                        src={cat.image_file ? URL.createObjectURL(cat.image_file) : cat.image_url}
+                        alt={`${cat.name || `Category ${catIdx + 1}`} preview`}
+                        className="h-32 w-full object-contain bg-black/20"
+                      />
+                    </div>
+                  )}
+
+                  {cat.image_url && !cat.image_file && (
+                    <div className="mb-2 truncate text-xs text-green-400" title={cat.image_url}>
+                      ✓ Current: {cat.image_url.split('/').pop().replace(/^\d+_/, '')}
+                    </div>
+                  )}
+
+                  <input
+                    type="file"
+                    accept={getAcceptTypes('image')}
+                    onChange={(e) => handleCategoryImageChange(catIdx, e.target.files?.[0])}
+                    className="block w-full rounded-lg bg-white/5 p-2 text-sm text-white file:mr-4 file:rounded-full file:border-0 file:bg-jeopardy-gold file:px-3 file:py-1 file:text-xs file:font-semibold file:text-jeopardy-dark hover:file:bg-yellow-400 focus:outline-none"
+                  />
+                </div>
                 
                 <div className="space-y-4">
                   {cat.questions.map((q, qIdx) => (
@@ -520,7 +573,7 @@ export default function GameBuilder() {
         </section>
 
         {/* Final Jeopardy Section */}
-        <section className="relative overflow-hidden rounded-3xl border border-red-500/25 bg-gradient-to-r from-red-950/40 via-purple-950/60 to-red-900/30 p-6 shadow-2xl backdrop-blur-md md:p-8 xl:p-10">
+        <section className="relative overflow-hidden rounded-3xl border border-red-500/25 bg-linear-to-r from-red-950/40 via-purple-950/60 to-red-900/30 p-6 shadow-2xl backdrop-blur-md md:p-8 xl:p-10">
           {/* Decorative glow */}
           <div className="pointer-events-none absolute -right-24 -top-24 h-64 w-64 rounded-full bg-jeopardy-gold/5 blur-3xl"></div>
           <div className="pointer-events-none absolute -left-24 bottom-0 h-56 w-56 rounded-full bg-blue-500/5 blur-3xl"></div>
@@ -599,7 +652,7 @@ export default function GameBuilder() {
                     </p>
                   </div>
 
-                  <div className="min-w-[140px] shrink-0">
+                  <div className="min-w-35 shrink-0">
                     <select
                       value={finalJeopardy.media_type || 'none'}
                       onChange={(e) => handleFinalJeopardyChange('media_type', e.target.value)}
@@ -647,7 +700,7 @@ export default function GameBuilder() {
                     <textarea
                       value={finalJeopardy.clue}
                       onChange={(e) => handleFinalJeopardyChange('clue', e.target.value)}
-                      className="min-h-[220px] w-full flex-1 resize-none rounded-2xl border border-white/8 bg-white/5 p-4 text-base text-white transition placeholder:text-white/20 focus:border-jeopardy-gold/40 focus:bg-white/10 focus:outline-none focus:ring-2 focus:ring-jeopardy-gold/25"
+                      className="min-h-55 w-full flex-1 resize-none rounded-2xl border border-white/8 bg-white/5 p-4 text-base text-white transition placeholder:text-white/20 focus:border-jeopardy-gold/40 focus:bg-white/10 focus:outline-none focus:ring-2 focus:ring-jeopardy-gold/25"
                       placeholder="Enter the Final Jeopardy clue..."
                     />
                     <p className="mt-3 text-xs leading-5 text-gray-500">
@@ -669,7 +722,7 @@ export default function GameBuilder() {
                     </p>
                   </div>
 
-                  <div className="min-w-[140px] shrink-0">
+                  <div className="min-w-35 shrink-0">
                     <select
                       value={finalJeopardy.answer_media_type || 'none'}
                       onChange={(e) => handleFinalJeopardyChange('answer_media_type', e.target.value)}
@@ -716,7 +769,7 @@ export default function GameBuilder() {
                     <textarea
                       value={finalJeopardy.answer}
                       onChange={(e) => handleFinalJeopardyChange('answer', e.target.value)}
-                      className="min-h-[220px] w-full flex-1 resize-none rounded-2xl border border-white/8 bg-white/5 p-4 text-base text-white transition placeholder:text-white/20 focus:border-jeopardy-gold/40 focus:bg-white/10 focus:outline-none focus:ring-2 focus:ring-jeopardy-gold/25"
+                      className="min-h-55 w-full flex-1 resize-none rounded-2xl border border-white/8 bg-white/5 p-4 text-base text-white transition placeholder:text-white/20 focus:border-jeopardy-gold/40 focus:bg-white/10 focus:outline-none focus:ring-2 focus:ring-jeopardy-gold/25"
                       placeholder="What is the correct response?"
                     />
                     <p className="mt-3 text-xs leading-5 text-gray-500">

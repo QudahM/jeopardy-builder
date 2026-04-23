@@ -126,13 +126,30 @@ export default function PlayBoard() {
       {/* GAME BOARD GRID */}
       <main className="flex-1 flex flex-col justify-center items-center p-8">
         <div 
-          className="grid gap-2 w-full h-full max-w-[1600px]"
+          className="grid gap-2 w-full h-full max-w-400"
           style={{ gridTemplateColumns: `repeat(${game.categories.length}, minmax(0, 1fr))` }}
         >
           {/* CATEGORIES HEADER */}
           {game.categories.map((cat) => (
-            <div key={cat.id} className="bg-jeopardy-blue flex items-center justify-center text-center p-4 border-[3px] border-black shadow-[inset_0_0_20px_rgba(0,0,0,0.5)]">
-               <h2 className="text-white text-shadow uppercase font-black md:text-2xl lg:text-3xl tracking-widest">{cat.name}</h2>
+            <div
+              key={cat.id}
+              className="relative h-full overflow-hidden bg-jeopardy-blue flex items-end text-center border-[3px] border-black shadow-[inset_0_0_20px_rgba(0,0,0,0.5)]"
+            >
+              {cat.image_url && (
+                <>
+                  <img
+                    src={resolveUrl(cat.image_url)}
+                    alt={cat.name}
+                    className="absolute inset-0 h-full w-full object-contain"
+                  />
+                  <div className="absolute inset-0 bg-linear-to-t from-black/85 via-black/35 to-black/10" />
+                </>
+              )}
+              <div className={`relative z-10 flex h-full w-full items-end p-4 ${cat.image_url ? '' : 'justify-center bg-jeopardy-blue'}`}>
+                <h2 className="w-full text-white text-shadow uppercase font-black md:text-2xl lg:text-3xl tracking-widest">
+                  {cat.name}
+                </h2>
+              </div>
             </div>
           ))}
 
@@ -177,7 +194,7 @@ export default function PlayBoard() {
       </main>
 
       {/* FOOTER : SCOREBOARD */}
-      <footer className="relative z-50 h-40 bg-black flex space-x-[2px] border-t-4 border-jeopardy-gold/40">
+      <footer className="relative z-50 h-40 bg-black flex space-x-0.5 border-t-4 border-jeopardy-gold/40">
         {[...contestants].sort((a, b) => a.id - b.id).map((c) => (
           <div key={c.id} className="flex-1 flex flex-col items-center justify-between py-2 border-x border-gray-800 relative bg-linear-to-t from-gray-900 to-black">
              <div className="text-gray-300 font-bold uppercase tracking-wider text-xl mt-2 truncate w-full text-center px-2">{c.name}</div>

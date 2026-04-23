@@ -28,6 +28,7 @@ type Category struct {
 	ID        uint       `json:"id" gorm:"primaryKey"`
 	GameID    uint       `json:"game_id"`
 	Name      string     `json:"name"`
+	ImageURL  string     `json:"image_url"`
 	Position  int        `json:"position"`
 	Questions []Question `json:"questions" gorm:"constraint:OnDelete:CASCADE;"`
 }

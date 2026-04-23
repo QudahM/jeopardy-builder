@@ -122,6 +122,7 @@ func makeTestGame(title string, numCat, numQ, baseValue int) map[string]interfac
 		}
 		categories[i] = map[string]interface{}{
 			"name":      fmt.Sprintf("Category %d", i+1),
+			"image_url": fmt.Sprintf("/uploads/category-%d.png", i+1),
 			"position":  i,
 			"questions": questions,
 		}
