@@ -9,6 +9,11 @@ import (
 	"github.com/jeopardy-game/backend/models"
 )
 
+const (
+	categoriesQuestions     = "Categories.Questions"
+	gameCategoriesQuestions = "Game.Categories.Questions"
+)
+
 // --- Game Endpoints ---
 
 // GetGames returns a list of games
@@ -23,7 +28,7 @@ func GetGame(c *gin.Context) {
 	id := c.Param("id")
 	var game models.Game
 
-	if err := database.DB.Preload("Categories").Preload("Categories.Questions").First(&game, id).Error; err != nil {
+	if err := database.DB.Preload("Categories").Preload(categoriesQuestions).First(&game, id).Error; err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": "Game not found"})
 		return
 	}
@@ -67,7 +72,7 @@ func UpdateGame(c *gin.Context) {
 	id := c.Param("id")
 
 	var existingGame models.Game
-	if err := database.DB.Preload("Categories").Preload("Categories.Questions").First(&existingGame, id).Error; err != nil {
+	if err := database.DB.Preload("Categories").Preload(categoriesQuestions).First(&existingGame, id).Error; err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": "Game not found"})
 		return
 	}
@@ -116,7 +121,7 @@ func UpdateGame(c *gin.Context) {
 	}
 
 	// Reload to return full data
-	database.DB.Preload("Categories").Preload("Categories.Questions").First(&existingGame, existingGame.ID)
+	database.DB.Preload("Categories").Preload(categoriesQuestions).First(&existingGame, existingGame.ID)
 	c.JSON(http.StatusOK, existingGame)
 }
 
@@ -136,7 +141,7 @@ func CreateSession(c *gin.Context) {
 	}
 
 	// Reload to get the Game template
-	database.DB.Preload("Game").Preload("Game.Categories").Preload("Game.Categories.Questions").Preload("Contestants").Preload("UsedQuestions").First(&session, session.ID)
+	database.DB.Preload("Game").Preload("Game.Categories").Preload(gameCategoriesQuestions).Preload("Contestants").Preload("UsedQuestions").First(&session, session.ID)
 
 	c.JSON(http.StatusCreated, session)
 }
@@ -146,7 +151,7 @@ func GetSession(c *gin.Context) {
 	id := c.Param("id")
 	var session models.PlaySession
 
-	if err := database.DB.Preload("Game").Preload("Game.Categories").Preload("Game.Categories.Questions").Preload("Contestants").Preload("UsedQuestions").First(&session, id).Error; err != nil {
+	if err := database.DB.Preload("Game").Preload("Game.Categories").Preload(gameCategoriesQuestions).Preload("Contestants").Preload("UsedQuestions").First(&session, id).Error; err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": "Session not found"})
 		return
 	}
