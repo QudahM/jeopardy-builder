@@ -11,6 +11,22 @@
   .text-shadow {
     text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
   }
+
+  .question-modal-media {
+    width: 100%;
+    max-width: 960px;
+    height: clamp(280px, 52vh, 560px);
+    max-height: 560px;
+    object-fit: cover;
+    object-position: center;
+  }
+
+  @media (max-width: 640px) {
+    .question-modal-media {
+      height: clamp(220px, 42vh, 420px);
+      min-height: 220px;
+    }
+  }
 }
 
 body {

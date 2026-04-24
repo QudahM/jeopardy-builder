@@ -281,19 +281,19 @@ export default function PlayBoard() {
 
       {/* ACTIVE QUESTION MODAL OVERLAY */}
       {activeQuestion && (
-        <div className="fixed inset-x-0 top-0 bottom-40 z-40 bg-black/95 flex flex-col items-center overflow-y-auto p-8 animate-in zoom-in duration-300">
+        <div className="fixed inset-x-0 top-0 bottom-40 z-40 bg-black/95 flex flex-col items-center justify-center overflow-y-auto p-4 sm:p-8 animate-in zoom-in duration-300">
           <button 
             onClick={closeQuestionModal}
-            className="absolute top-8 right-8 text-gray-400 hover:text-white p-2 rounded-full hover:bg-white/10 z-50"
+            className="absolute top-4 right-4 sm:top-8 sm:right-8 text-gray-400 hover:text-white p-2 rounded-full hover:bg-white/10 z-50"
           >
-            <X size={48} />
+            <X className="size-10 sm:size-12" />
           </button>
           
-          <div className="w-full flex flex-col items-center max-w-6xl text-center gap-6 my-auto py-4">
+          <div className="w-full md:min-w-[500px] max-w-5xl flex flex-col items-center text-center gap-4 sm:gap-6 py-4">
             {!showAnswer && activeQuestion.media_type && activeQuestion.media_type !== 'none' && activeQuestion.media_url && (
-              <div className="flex justify-center items-center w-full max-h-[40vh]">
+              <div className="flex justify-center items-center w-full">
                 {activeQuestion.media_type === 'image' && (
-                  <img src={resolveUrl(activeQuestion.media_url)} referrerPolicy="no-referrer" alt="Clue Media" className="max-h-[40vh] max-w-full rounded-2xl shadow-2xl border-4 border-jeopardy-gold/40 object-contain" />
+                  <img src={resolveUrl(activeQuestion.media_url)} referrerPolicy="no-referrer" alt="Clue Media" className="question-modal-media rounded-2xl shadow-2xl border-4 border-jeopardy-gold/40" />
                 )}
                 {activeQuestion.media_type === 'video' && (
                   <div className="max-h-[40vh] max-w-full rounded-2xl overflow-hidden shadow-2xl border-4 border-jeopardy-gold/40 bg-black flex justify-center items-center">
@@ -328,9 +328,9 @@ export default function PlayBoard() {
 
             {/* Answer media (shown when revealing answer) */}
             {showAnswer && activeQuestion.answer_media_type && activeQuestion.answer_media_type !== 'none' && activeQuestion.answer_media_url && (
-              <div className="flex justify-center items-center w-full max-h-[40vh]">
+              <div className="flex justify-center items-center w-full">
                 {activeQuestion.answer_media_type === 'image' && (
-                  <img src={resolveUrl(activeQuestion.answer_media_url)} referrerPolicy="no-referrer" alt="Answer Media" className="max-h-[40vh] max-w-full rounded-2xl shadow-2xl border-4 border-jeopardy-gold/40 object-contain" />
+                  <img src={resolveUrl(activeQuestion.answer_media_url)} referrerPolicy="no-referrer" alt="Answer Media" className="question-modal-media rounded-2xl shadow-2xl border-4 border-jeopardy-gold/40" />
                 )}
                 {activeQuestion.answer_media_type === 'video' && (
                   <div className="max-h-[40vh] max-w-full rounded-2xl overflow-hidden shadow-2xl border-4 border-jeopardy-gold/40 bg-black flex justify-center items-center">
