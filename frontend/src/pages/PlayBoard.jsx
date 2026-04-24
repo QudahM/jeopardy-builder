@@ -295,6 +295,19 @@ export default function PlayBoard() {
                 {activeQuestion.media_type === 'image' && (
                   <img src={resolveUrl(activeQuestion.media_url)} referrerPolicy="no-referrer" alt="Clue Media" className="question-modal-media rounded-2xl shadow-2xl border-4 border-jeopardy-gold/40" />
                 )}
+                {activeQuestion.media_type === 'image_audio' && (
+                  <div className="flex w-full max-w-240 flex-col items-center gap-4">
+                    <img src={resolveUrl(activeQuestion.media_url)} referrerPolicy="no-referrer" alt="Clue Media" className="question-modal-media rounded-2xl shadow-2xl border-4 border-jeopardy-gold/40" />
+                    <div className="w-full bg-black/50 p-2 rounded-xl border-2 border-jeopardy-gold/40">
+                      <audio
+                        src={resolveUrl(activeQuestion.media_audio_url)}
+                        autoPlay
+                        controls
+                        style={{ width: '100%' }}
+                      />
+                    </div>
+                  </div>
+                )}
                 {activeQuestion.media_type === 'video' && (
                   <div className="max-h-[40vh] max-w-full rounded-2xl overflow-hidden shadow-2xl border-4 border-jeopardy-gold/40 bg-black flex justify-center items-center">
                     <video

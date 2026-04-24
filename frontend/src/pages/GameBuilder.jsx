@@ -10,6 +10,8 @@ const createEmptyQuestion = (tier, basePointValue) => ({
   media_type: 'none',
   media_url: '',
   media_file: null,
+  media_audio_url: '',
+  media_audio_file: null,
   options: '',
   answer: '',
   answer_media_type: 'none',
@@ -81,7 +83,9 @@ export default function GameBuilder() {
             image_file: null,
             questions: cat.questions.map(q => ({
               ...q,
+              media_audio_url: q.media_audio_url || '',
               media_file: null,
+              media_audio_file: null,
               answer_media_file: null,
             })),
           }))
@@ -158,7 +162,22 @@ export default function GameBuilder() {
 
   const handleQuestionChange = (catIdx, qIdx, field, value) => {
     const newCats = [...categories];
-    newCats[catIdx].questions[qIdx][field] = value;
+    const question = newCats[catIdx].questions[qIdx];
+    const previousMediaType = question.media_type;
+    question[field] = value;
+    if (field === 'media_type') {
+      question.media_file = null;
+      question.media_audio_file = null;
+      if (value === 'image_audio' && previousMediaType !== 'image' && previousMediaType !== 'image_audio') {
+        question.media_url = '';
+      }
+      if (value !== 'image_audio') {
+        question.media_audio_url = '';
+      }
+      if (value === 'none' || (value !== 'image_audio' && previousMediaType === 'image_audio')) {
+        question.media_url = '';
+      }
+    }
     setCategories(newCats);
   };
 
@@ -167,6 +186,7 @@ export default function GameBuilder() {
       case 'image': return '.jpeg,.jpg,.png,.gif,.svg,.webp';
       case 'video': return '.mp4,.mov,.mkv,.avi,.webm';
       case 'audio': return '.mp3,.aac,.wav,.flac,.m4a';
+      case 'image_audio': return '.jpeg,.jpg,.png,.gif,.svg,.webp';
       default: return '';
     }
   };
@@ -221,22 +241,36 @@ export default function GameBuilder() {
       }));
 
       // Upload all new files before finalizing the payload
-      for (let i = 0; i < payloadCats.length; i++) {
-        if (payloadCats[i].image_file) {
-          const result = await uploadMedia(payloadCats[i].image_file);
-          payloadCats[i].image_url = result.url;
+      for (const cat of payloadCats) {
+        if (cat.image_file) {
+          const result = await uploadMedia(cat.image_file);
+          cat.image_url = result.url;
         }
-        delete payloadCats[i].image_file;
+        delete cat.image_file;
 
-        for (let j = 0; j < payloadCats[i].questions.length; j++) {
-          let q = payloadCats[i].questions[j];
-          if (q.media_type !== 'none' && q.media_file) {
+        for (const q of cat.questions) {
+          if (q.media_type === 'image_audio') {
+            if (q.media_file) {
+              const result = await uploadMedia(q.media_file);
+              q.media_url = result.url;
+            }
+            if (q.media_audio_file) {
+              const result = await uploadMedia(q.media_audio_file);
+              q.media_audio_url = result.url;
+            }
+            if (!q.media_url || !q.media_audio_url) {
+              alert('Image + Audio clues need both an image and an audio file.');
+              setIsUploading(false);
+              return;
+            }
+          } else if (q.media_type !== 'none' && q.media_file) {
             const result = await uploadMedia(q.media_file);
             q.media_url = result.url;
           } else if (q.media_type !== 'none' && !q.media_url) {
             q.media_type = 'none';
           }
           delete q.media_file;
+          delete q.media_audio_file;
 
           // Handle answer media uploads
           if (q.answer_media_type !== 'none' && q.answer_media_file) {
@@ -450,11 +484,42 @@ export default function GameBuilder() {
                             >
                               <option value="none" className="bg-[#0a1128] text-white">Text Only</option>
                               <option value="image" className="bg-[#0a1128] text-white">Image</option>
+                              <option value="image_audio" className="bg-[#0a1128] text-white">Image + Audio</option>
                               <option value="audio" className="bg-[#0a1128] text-white">Audio</option>
                               <option value="video" className="bg-[#0a1128] text-white">Video</option>
                             </select>
                           </div>
-                          {(q.media_type && q.media_type !== 'none') && (
+                          {q.media_type === 'image_audio' && (
+                            <div className="mb-2 space-y-2">
+                              <div>
+                                {q.media_url && !q.media_file && (
+                                  <div className="text-xs text-green-400 mb-1 truncate" title={q.media_url}>
+                                    ✓ Current image: {q.media_url.split('/').pop().replace(/^\d+_/, '')}
+                                  </div>
+                                )}
+                                <input
+                                  type="file"
+                                  accept={getAcceptTypes('image')}
+                                  onChange={(e) => handleQuestionChange(catIdx, qIdx, 'media_file', e.target.files[0])}
+                                  className="w-full bg-white/5 rounded-lg p-2 text-sm text-white focus:outline-none focus:border focus:border-jeopardy-gold block file:mr-4 file:py-1 file:px-3 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-jeopardy-gold file:text-jeopardy-dark hover:file:bg-yellow-400"
+                                />
+                              </div>
+                              <div>
+                                {q.media_audio_url && !q.media_audio_file && (
+                                  <div className="text-xs text-green-400 mb-1 truncate" title={q.media_audio_url}>
+                                    ✓ Current audio: {q.media_audio_url.split('/').pop().replace(/^\d+_/, '')}
+                                  </div>
+                                )}
+                                <input
+                                  type="file"
+                                  accept={getAcceptTypes('audio')}
+                                  onChange={(e) => handleQuestionChange(catIdx, qIdx, 'media_audio_file', e.target.files[0])}
+                                  className="w-full bg-white/5 rounded-lg p-2 text-sm text-white focus:outline-none focus:border focus:border-jeopardy-gold block file:mr-4 file:py-1 file:px-3 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-jeopardy-gold file:text-jeopardy-dark hover:file:bg-yellow-400"
+                                />
+                              </div>
+                            </div>
+                          )}
+                          {(q.media_type && q.media_type !== 'none' && q.media_type !== 'image_audio') && (
                             <div className="mb-2">
                               {q.media_url && !q.media_file && (
                                 <div className="text-xs text-green-400 mb-1 truncate" title={q.media_url}>

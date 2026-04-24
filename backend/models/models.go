@@ -18,7 +18,7 @@ type Game struct {
 	FinalJeopardyCategory        string `json:"final_jeopardy_category"`
 	FinalJeopardyClue            string `json:"final_jeopardy_clue"`
 	FinalJeopardyAnswer          string `json:"final_jeopardy_answer"`
-	FinalJeopardyMediaType       string `json:"final_jeopardy_media_type"`       // none, image, audio, video
+	FinalJeopardyMediaType       string `json:"final_jeopardy_media_type"` // none, image, audio, video
 	FinalJeopardyMediaURL        string `json:"final_jeopardy_media_url"`
 	FinalJeopardyAnswerMediaType string `json:"final_jeopardy_answer_media_type"` // none, image, video
 	FinalJeopardyAnswerMediaURL  string `json:"final_jeopardy_answer_media_url"`
@@ -39,8 +39,9 @@ type Question struct {
 	Tier            int    `json:"tier"` // Row index (0, 1, 2...)
 	PointValue      int    `json:"point_value"`
 	Clue            string `json:"clue"`
-	MediaType       string `json:"media_type"` // none, image, audio, video
+	MediaType       string `json:"media_type"` // none, image, audio, video, image_audio
 	MediaURL        string `json:"media_url"`
+	MediaAudioURL   string `json:"media_audio_url"`
 	Options         string `json:"options"` // JSON array of multiple choice options, e.g. '["A","B","C"]'
 	Answer          string `json:"answer"`
 	AnswerMediaType string `json:"answer_media_type"` // none, image, video
