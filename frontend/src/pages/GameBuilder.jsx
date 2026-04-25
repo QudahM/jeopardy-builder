@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Save, ArrowLeft, Plus, Settings, Trophy } from 'lucide-react';
 import { createGame, updateGame, uploadMedia, getGame } from '../api/client';
@@ -31,9 +31,20 @@ export default function GameBuilder() {
   const navigate = useNavigate();
   const { id: editId } = useParams();
   const isEditMode = Boolean(editId);
+  const categoriesScrollRef = useRef(null);
+  const dragScrollState = useRef({
+    isDragging: false,
+    startX: 0,
+    scrollLeft: 0,
+    positions: [],
+    velocity: 0,
+    momentumFrame: null,
+    lastMomentumTime: 0,
+  });
 
   const [isUploading, setIsUploading] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [isDraggingCategories, setIsDraggingCategories] = useState(false);
   const [config, setConfig] = useState({
     title: 'New Game',
     num_categories: 6,
@@ -59,6 +70,99 @@ export default function GameBuilder() {
 
   const handleFinalJeopardyChange = (field, value) => {
     setFinalJeopardy(prev => ({ ...prev, [field]: value }));
+  };
+
+  const handleCategoriesWheel = (event) => {
+    if (event.shiftKey) return;
+    event.preventDefault();
+    event.currentTarget.scrollLeft += event.deltaY;
+  };
+
+  const isInteractiveElement = (target) => {
+    return target.closest('input, button, textarea, select, option, label, a, [role="button"]');
+  };
+
+  const handleCategoriesMouseDown = (event) => {
+    if (event.button !== 0 || isInteractiveElement(event.target)) return;
+
+    const container = categoriesScrollRef.current;
+    if (!container) return;
+
+    if (dragScrollState.current.momentumFrame) {
+      cancelAnimationFrame(dragScrollState.current.momentumFrame);
+    }
+
+    const now = performance.now();
+    dragScrollState.current = {
+      isDragging: true,
+      startX: event.clientX,
+      scrollLeft: container.scrollLeft,
+      positions: [{ x: event.clientX, time: now }],
+      velocity: 0,
+      momentumFrame: null,
+      lastMomentumTime: 0,
+    };
+    setIsDraggingCategories(true);
+  };
+
+  const handleCategoriesMouseMove = (event) => {
+    const container = categoriesScrollRef.current;
+    if (!container || !dragScrollState.current.isDragging) return;
+
+    event.preventDefault();
+    container.style.scrollBehavior = 'auto';
+    const now = performance.now();
+    const x = event.clientX;
+    const previousPosition = dragScrollState.current.positions.at(-1);
+    const walk = (x - dragScrollState.current.startX) * 2;
+
+    if (previousPosition) {
+      const elapsed = now - previousPosition.time;
+      if (elapsed > 0) {
+        dragScrollState.current.velocity = (x - previousPosition.x) / elapsed;
+      }
+    }
+
+    dragScrollState.current.positions = [
+      ...dragScrollState.current.positions,
+      { x, time: now },
+    ].slice(-5);
+    container.scrollLeft = dragScrollState.current.scrollLeft - walk;
+  };
+
+  const stopCategoriesDrag = () => {
+    if (!dragScrollState.current.isDragging) return;
+
+    const container = categoriesScrollRef.current;
+    const friction = 0.92;
+    const minVelocity = 0.5;
+
+    dragScrollState.current.isDragging = false;
+    setIsDraggingCategories(false);
+
+    const runMomentum = (timestamp) => {
+      if (!container || dragScrollState.current.isDragging) return;
+
+      const elapsed = dragScrollState.current.lastMomentumTime
+        ? timestamp - dragScrollState.current.lastMomentumTime
+        : 16;
+      dragScrollState.current.lastMomentumTime = timestamp;
+
+      const frameVelocity = dragScrollState.current.velocity * elapsed * 2;
+      container.scrollLeft -= frameVelocity;
+      dragScrollState.current.velocity *= friction;
+
+      if (Math.abs(dragScrollState.current.velocity) < minVelocity) {
+        dragScrollState.current.momentumFrame = null;
+        dragScrollState.current.lastMomentumTime = 0;
+        return;
+      }
+
+      dragScrollState.current.momentumFrame = requestAnimationFrame(runMomentum);
+    };
+
+    dragScrollState.current.lastMomentumTime = 0;
+    dragScrollState.current.momentumFrame = requestAnimationFrame(runMomentum);
   };
 
   // Load existing game data in edit mode
@@ -408,7 +512,15 @@ export default function GameBuilder() {
         {/* Board Builder */}
         <section className="space-y-8">
           <h2 className="text-2xl font-semibold flex items-center gap-2">Board Content</h2>
-          <div className="flex gap-6 overflow-x-auto pb-4 snap-x pr-8">
+          <div
+            ref={categoriesScrollRef}
+            onWheel={handleCategoriesWheel}
+            onMouseDown={handleCategoriesMouseDown}
+            onMouseMove={handleCategoriesMouseMove}
+            onMouseUp={stopCategoriesDrag}
+            onMouseLeave={stopCategoriesDrag}
+            className={`flex gap-6 overflow-x-auto overflow-y-hidden pb-4 snap-x pr-8 ${isDraggingCategories ? 'cursor-grabbing' : ''}`}
+          >
             {categories.map((cat, catIdx) => (
               <div key={catIdx} className="min-w-[320px] snap-center bg-white/5 p-4 rounded-2xl border border-white/10 shrink-0">
                 <input
