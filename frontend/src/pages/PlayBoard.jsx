@@ -160,9 +160,11 @@ export default function PlayBoard() {
                 const q = cat.questions[qIndex];
                 const isUsed = usedQIds.has(q.id);
                 return (
-                  <div 
-                    key={q.id} 
-                    onClick={() => !isUsed && handleQuestionClick(q)}
+                  <button
+                    key={q.id}
+                    type="button"
+                    disabled={isUsed}
+                    onClick={() => handleQuestionClick(q)}
                     className={`bg-jeopardy-blue border-[3px] border-black flex flex-col items-center justify-center cursor-pointer transition-all ${isUsed ? 'opacity-0 invisible' : 'hover:bg-blue-700 shadow-[inset_0_0_20px_rgba(0,0,0,0.5)] active:scale-95'}`}
                   >
                     {!isUsed && (
@@ -170,7 +172,7 @@ export default function PlayBoard() {
                         ${q.point_value}
                       </span>
                     )}
-                  </div>
+                  </button>
                 );
               })}
             </React.Fragment>
@@ -178,9 +180,11 @@ export default function PlayBoard() {
 
           {/* FINAL JEOPARDY ROW */}
           {hasFinalJeopardy && (
-            <div
-              onClick={() => !fjUsed && openFinalJeopardy()}
-              className={`border-[3px] border-black flex items-center justify-center gap-3 p-4 transition-all cursor-pointer ${fjUsed ? 'bg-gray-800/50 opacity-40 cursor-default' : 'bg-linear-to-r from-red-800 to-red-900 hover:from-red-700 hover:to-red-800 shadow-[inset_0_0_30px_rgba(0,0,0,0.5)] active:scale-[0.99]'}`}
+            <button
+              type="button"
+              onClick={openFinalJeopardy}
+              disabled={fjUsed}
+              className={`border-[3px] border-black flex items-center justify-center gap-3 p-4 transition-all ${fjUsed ? 'bg-gray-800/50 opacity-40 cursor-default' : 'cursor-pointer bg-linear-to-r from-red-800 to-red-900 hover:from-red-700 hover:to-red-800 shadow-[inset_0_0_30px_rgba(0,0,0,0.5)] active:scale-[0.99]'}`}
               style={{ gridColumn: `1 / -1` }}
             >
               <Trophy size={36} className="text-jeopardy-gold" />
@@ -188,7 +192,7 @@ export default function PlayBoard() {
                 Final Jeopardy
               </span>
               <Trophy size={36} className="text-jeopardy-gold" />
-            </div>
+            </button>
           )}
         </div>
       </main>
@@ -281,7 +285,7 @@ export default function PlayBoard() {
 
       {/* ACTIVE QUESTION MODAL OVERLAY */}
       {activeQuestion && (
-        <div className="fixed inset-x-0 top-0 bottom-40 z-40 bg-black/95 flex flex-col items-center justify-center overflow-y-auto p-4 sm:p-8 animate-in zoom-in duration-300">
+        <div className="fixed inset-x-0 top-0 bottom-40 z-40 bg-black/95 flex flex-col items-center justify-start overflow-y-auto p-4 sm:p-8 animate-in zoom-in duration-300">
           <button 
             onClick={closeQuestionModal}
             className="absolute top-4 right-4 sm:top-8 sm:right-8 text-gray-400 hover:text-white p-2 rounded-full hover:bg-white/10 z-50"
@@ -289,14 +293,14 @@ export default function PlayBoard() {
             <X className="size-10 sm:size-12" />
           </button>
           
-          <div className="w-full md:min-w-[500px] max-w-5xl flex flex-col items-center text-center gap-4 sm:gap-6 py-4">
+          <div className="my-auto w-full md:min-w-125 max-w-5xl flex flex-col items-center text-center gap-4 sm:gap-6 py-4">
             {!showAnswer && activeQuestion.media_type && activeQuestion.media_type !== 'none' && activeQuestion.media_url && (
               <div className="flex justify-center items-center w-full">
                 {activeQuestion.media_type === 'image' && (
                   <img src={resolveUrl(activeQuestion.media_url)} referrerPolicy="no-referrer" alt="Clue Media" className="question-modal-media rounded-2xl shadow-2xl border-4 border-jeopardy-gold/40" />
                 )}
                 {activeQuestion.media_type === 'image_audio' && (
-                  <div className="flex w-full max-w-240 flex-col items-center gap-4">
+                  <div className="flex w-full flex-col items-center gap-4">
                     <img src={resolveUrl(activeQuestion.media_url)} referrerPolicy="no-referrer" alt="Clue Media" className="question-modal-media rounded-2xl shadow-2xl border-4 border-jeopardy-gold/40" />
                     <div className="w-full bg-black/50 p-2 rounded-xl border-2 border-jeopardy-gold/40">
                       <audio

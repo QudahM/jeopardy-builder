@@ -13,19 +13,11 @@
   }
 
   .question-modal-media {
+    display: block;
     width: 100%;
-    max-width: 960px;
-    height: clamp(280px, 52vh, 560px);
-    max-height: 560px;
-    object-fit: cover;
+    height: auto;
+    object-fit: contain;
     object-position: center;
-  }
-
-  @media (max-width: 640px) {
-    .question-modal-media {
-      height: clamp(220px, 42vh, 420px);
-      min-height: 220px;
-    }
   }
 }
 
