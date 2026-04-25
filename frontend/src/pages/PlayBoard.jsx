@@ -60,8 +60,8 @@ export default function PlayBoard() {
     return () => { ignore = true; };
   }, [sessionId]);
 
-  const handleQuestionClick = (q) => {
-    setActiveQuestion(q);
+  const handleQuestionClick = (q, categoryName) => {
+    setActiveQuestion({ ...q, category_name: categoryName });
     setShowAnswer(false);
   };
 
@@ -164,7 +164,7 @@ export default function PlayBoard() {
                     key={q.id}
                     type="button"
                     disabled={isUsed}
-                    onClick={() => handleQuestionClick(q)}
+                    onClick={() => handleQuestionClick(q, cat.name)}
                     className={`bg-jeopardy-blue border-[3px] border-black flex flex-col items-center justify-center cursor-pointer transition-all ${isUsed ? 'opacity-0 invisible' : 'hover:bg-blue-700 shadow-[inset_0_0_20px_rgba(0,0,0,0.5)] active:scale-95'}`}
                   >
                     {!isUsed && (
@@ -293,6 +293,15 @@ export default function PlayBoard() {
             <X className="size-10 sm:size-12" />
           </button>
           
+            <div className="flex items-center justify-between gap-4 text-jeopardy-gold">
+              <div className="min-w-0 truncate text-left text-xl font-black uppercase tracking-widest sm:text-2xl md:text-3xl">
+                {activeQuestion.category_name}
+              </div>
+              <div className="shrink-0 text-right text-xl font-black sm:text-2xl md:text-3xl">
+                (${activeQuestion.point_value})
+              </div>
+            </div>
+
           <div className="my-auto w-full md:min-w-125 max-w-5xl flex flex-col items-center text-center gap-4 sm:gap-6 py-4">
             {!showAnswer && activeQuestion.media_type && activeQuestion.media_type !== 'none' && activeQuestion.media_url && (
               <div className="flex justify-center items-center w-full">
@@ -383,7 +392,7 @@ export default function PlayBoard() {
                           className="flex items-center gap-4 bg-jeopardy-blue/40 border-2 border-jeopardy-gold/30 rounded-xl px-6 py-4 text-left"
                         >
                           <span className="text-jeopardy-gold font-black text-3xl md:text-4xl shrink-0">
-                            {String.fromCharCode(65 + i)})
+                            {String.fromCodePoint(65 + i)})
                           </span>
                           <span className="text-white font-bold text-2xl md:text-3xl">
                             {opt}
