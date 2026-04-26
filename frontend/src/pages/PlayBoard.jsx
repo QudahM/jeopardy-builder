@@ -111,6 +111,14 @@ export default function PlayBoard() {
   const hasFinalJeopardy = game.final_jeopardy_clue || game.final_jeopardy_answer;
 
   const resolveUrl = (url) => url?.startsWith('/') ? `${window.location.origin}${url}` : url;
+  const formatScore = (score) => `${score < 0 ? '-' : ''}$${Math.abs(score)}`;
+  const ScoreTotal = ({ score, className = '' }) => (
+    <div
+      className={`font-black text-jeopardy-gold text-shadow drop-shadow-[0_0_12px_rgba(255,204,0,0.35)] ${className}`}
+    >
+      {formatScore(score)}
+    </div>
+  );
 
   return (
     <div className="h-screen flex flex-col bg-jeopardy-dark overflow-hidden">
@@ -201,10 +209,8 @@ export default function PlayBoard() {
       <footer className="relative z-50 h-40 bg-black flex space-x-0.5 border-t-4 border-jeopardy-gold/40">
         {[...contestants].sort((a, b) => a.id - b.id).map((c) => (
           <div key={c.id} className="flex-1 flex flex-col items-center justify-between py-2 border-x border-gray-800 relative bg-linear-to-t from-gray-900 to-black">
-             <div className="text-gray-300 font-bold uppercase tracking-wider text-xl mt-2 truncate w-full text-center px-2">{c.name}</div>
-             <div className="font-extrabold text-5xl lg:text-6xl mb-2 text-white" style={{ textShadow: '0 0 10px rgba(255,255,255,0.3)' }}>
-               {c.score < 0 && <span className="text-red-500">-</span>}${Math.abs(c.score)}
-             </div>
+             <div className="text-white font-black text-xl lg:text-2xl uppercase tracking-widest drop-shadow-[0_2px_2px_rgba(0,0,0,0.8)] mt-2 truncate w-full text-center px-2">{c.name}</div>
+             <ScoreTotal score={c.score} className="text-5xl lg:text-6xl mb-2" />
              
              {/* Score Controls Overlay during Active Question */}
              {activeQuestion && (
@@ -212,6 +218,7 @@ export default function PlayBoard() {
                  <div className="w-full text-center shrink-0">
                    <div className="text-white font-black text-xl lg:text-2xl uppercase tracking-widest drop-shadow-[0_2px_2px_rgba(0,0,0,0.8)]">{c.name}</div>
                  </div>
+                 <ScoreTotal score={c.score} className="text-4xl lg:text-5xl leading-none" />
                  <div className="flex w-full gap-3 justify-center items-center pb-1">
                    <button 
                     onClick={() => alterScore(c.id, pointValue)}
@@ -231,30 +238,31 @@ export default function PlayBoard() {
 
              {/* Final Jeopardy Wager Controls */}
              {fjActive && (
-               <div className="absolute inset-0 bg-black/90 backdrop-blur-md flex flex-col items-center justify-between p-3 z-20">
+               <div className="absolute inset-0 bg-black/90 backdrop-blur-md flex flex-col items-center justify-between p-2 z-20">
                  <div className="w-full text-center shrink-0">
-                   <div className="text-white font-black text-lg lg:text-xl uppercase tracking-widest drop-shadow-[0_2px_2px_rgba(0,0,0,0.8)]">{c.name}</div>
+                   <div className="text-white font-black text-sm lg:text-base uppercase tracking-wider drop-shadow-[0_2px_2px_rgba(0,0,0,0.8)] truncate px-1">{c.name}</div>
                  </div>
-                 <div className="w-full px-1">
-                   <label className="text-xs text-jeopardy-gold font-semibold uppercase tracking-wider block text-center mb-1">Wager $</label>
+                 <ScoreTotal score={c.score} className="text-2xl lg:text-3xl leading-none" />
+                 <div className="w-full max-w-32 px-1">
+                   <label className="text-[10px] text-jeopardy-gold font-semibold uppercase tracking-wider block text-center mb-0.5">Wager $</label>
                    <input
                      type="number"
                      min="0"
                      value={fjWagers[c.id] || 0}
                      onChange={(e) => handleFjWagerChange(c.id, e.target.value)}
-                     className="w-full bg-white/10 border border-jeopardy-gold/40 rounded-lg p-2 text-center text-white font-bold text-lg focus:outline-none focus:border-jeopardy-gold"
+                     className="w-full bg-white/10 border border-jeopardy-gold/40 rounded-lg px-2 py-1 text-center text-white font-bold text-base focus:outline-none focus:border-jeopardy-gold"
                    />
                  </div>
-                 <div className="flex w-full gap-2 justify-center items-center pb-1">
+                 <div className="flex w-full gap-3 justify-center items-center pb-0.5">
                    <button 
                     onClick={() => alterScore(c.id, fjWagers[c.id] || 0)}
-                    className="flex-1 bg-green-600 hover:bg-green-500 text-white font-black py-2 rounded-lg shadow-[0_0_15px_rgba(0,255,0,0.4)] transition-all active:scale-95 text-sm lg:text-base border border-green-400/30"
+                    className="flex-1 bg-green-600 hover:bg-green-500 text-white font-black py-3 rounded-lg shadow-[0_0_15px_rgba(0,255,0,0.4)] transition-all active:scale-95 text-lg lg:text-xl border border-green-400/30"
                    >
                      +${fjWagers[c.id] || 0}
                    </button>
                    <button 
                     onClick={() => alterScore(c.id, -(fjWagers[c.id] || 0))}
-                    className="flex-1 bg-red-600 hover:bg-red-500 text-white font-black py-2 rounded-lg shadow-[0_0_15px_rgba(255,0,0,0.4)] transition-all active:scale-95 text-sm lg:text-base border border-red-400/30"
+                    className="flex-1 bg-red-600 hover:bg-red-500 text-white font-black py-3 rounded-lg shadow-[0_0_15px_rgba(255,0,0,0.4)] transition-all active:scale-95 text-lg lg:text-xl border border-red-400/30"
                    >
                      -${fjWagers[c.id] || 0}
                    </button>
@@ -264,16 +272,16 @@ export default function PlayBoard() {
 
              {/* Host Controls: +100 / -100 when no question is active */}
              {!activeQuestion && !fjActive && (
-               <div className="flex w-full gap-2 justify-center items-center px-2 pb-1">
+               <div className="flex w-full gap-3 justify-center items-center px-2 pb-1">
                  <button 
                    onClick={() => alterScore(c.id, 100)}
-                   className="flex-1 bg-green-700/60 hover:bg-green-600 text-white font-bold py-1.5 rounded-md transition-all active:scale-95 text-sm border border-green-500/30"
+                   className="flex-1 bg-green-600 hover:bg-green-500 text-white font-black py-3 rounded-lg shadow-[0_0_15px_rgba(0,255,0,0.4)] transition-all active:scale-95 text-lg lg:text-xl border border-green-400/30"
                  >
                    +$100
                  </button>
                  <button 
                    onClick={() => alterScore(c.id, -100)}
-                   className="flex-1 bg-red-700/60 hover:bg-red-600 text-white font-bold py-1.5 rounded-md transition-all active:scale-95 text-sm border border-red-500/30"
+                   className="flex-1 bg-red-600 hover:bg-red-500 text-white font-black py-3 rounded-lg shadow-[0_0_15px_rgba(255,0,0,0.4)] transition-all active:scale-95 text-lg lg:text-xl border border-red-400/30"
                  >
                    -$100
                  </button>
