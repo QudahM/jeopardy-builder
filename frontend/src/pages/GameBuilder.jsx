@@ -17,6 +17,8 @@ const createEmptyQuestion = (tier, basePointValue) => ({
   answer_media_type: 'none',
   answer_media_url: '',
   answer_media_file: null,
+  answer_media_audio_url: '',
+  answer_media_audio_file: null,
 });
 
 const createDefaultCategory = (index, questionCount, basePointValue) => ({
@@ -191,6 +193,8 @@ export default function GameBuilder() {
               media_file: null,
               media_audio_file: null,
               answer_media_file: null,
+              answer_media_audio_url: q.answer_media_audio_url || '',
+              answer_media_audio_file: null,
             })),
           }))
         );
@@ -268,6 +272,7 @@ export default function GameBuilder() {
     const newCats = [...categories];
     const question = newCats[catIdx].questions[qIdx];
     const previousMediaType = question.media_type;
+    const previousAnswerMediaType = question.answer_media_type;
     question[field] = value;
     if (field === 'media_type') {
       question.media_file = null;
@@ -280,6 +285,19 @@ export default function GameBuilder() {
       }
       if (value === 'none' || (value !== 'image_audio' && previousMediaType === 'image_audio')) {
         question.media_url = '';
+      }
+    }
+    if (field === 'answer_media_type') {
+      question.answer_media_file = null;
+      question.answer_media_audio_file = null;
+      if (value === 'image_audio' && previousAnswerMediaType !== 'image' && previousAnswerMediaType !== 'image_audio') {
+        question.answer_media_url = '';
+      }
+      if (value !== 'image_audio') {
+        question.answer_media_audio_url = '';
+      }
+      if (value === 'none' || (value !== 'image_audio' && previousAnswerMediaType === 'image_audio')) {
+        question.answer_media_url = '';
       }
     }
     setCategories(newCats);
@@ -377,13 +395,28 @@ export default function GameBuilder() {
           delete q.media_audio_file;
 
           // Handle answer media uploads
-          if (q.answer_media_type !== 'none' && q.answer_media_file) {
+          if (q.answer_media_type === 'image_audio') {
+            if (q.answer_media_file) {
+              const result = await uploadMedia(q.answer_media_file);
+              q.answer_media_url = result.url;
+            }
+            if (q.answer_media_audio_file) {
+              const result = await uploadMedia(q.answer_media_audio_file);
+              q.answer_media_audio_url = result.url;
+            }
+            if (!q.answer_media_url || !q.answer_media_audio_url) {
+              alert('Image + Audio answers need both an image and an audio file.');
+              setIsUploading(false);
+              return;
+            }
+          } else if (q.answer_media_type !== 'none' && q.answer_media_file) {
             const result = await uploadMedia(q.answer_media_file);
             q.answer_media_url = result.url;
           } else if (q.answer_media_type !== 'none' && !q.answer_media_url) {
             q.answer_media_type = 'none';
           }
           delete q.answer_media_file;
+          delete q.answer_media_audio_file;
         }
       }
 
@@ -713,10 +746,42 @@ export default function GameBuilder() {
                             >
                               <option value="none" className="bg-[#0a1128] text-white">Text Only</option>
                               <option value="image" className="bg-[#0a1128] text-white">Image</option>
+                              <option value="image_audio" className="bg-[#0a1128] text-white">Image + Audio</option>
+                              <option value="audio" className="bg-[#0a1128] text-white">Audio</option>
                               <option value="video" className="bg-[#0a1128] text-white">Video</option>
                             </select>
                           </div>
-                          {(q.answer_media_type && q.answer_media_type !== 'none') && (
+                          {q.answer_media_type === 'image_audio' && (
+                            <div className="mb-2 space-y-2">
+                              <div>
+                                {q.answer_media_url && !q.answer_media_file && (
+                                  <div className="text-xs text-green-400 mb-1 truncate" title={q.answer_media_url}>
+                                    ✓ Current image: {q.answer_media_url.split('/').pop().replace(/^\d+_/, '')}
+                                  </div>
+                                )}
+                                <input
+                                  type="file"
+                                  accept={getAcceptTypes('image')}
+                                  onChange={(e) => handleQuestionChange(catIdx, qIdx, 'answer_media_file', e.target.files[0])}
+                                  className="w-full bg-white/5 rounded-lg p-2 text-sm text-white focus:outline-none focus:border focus:border-jeopardy-gold block file:mr-4 file:py-1 file:px-3 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-jeopardy-gold file:text-jeopardy-dark hover:file:bg-yellow-400"
+                                />
+                              </div>
+                              <div>
+                                {q.answer_media_audio_url && !q.answer_media_audio_file && (
+                                  <div className="text-xs text-green-400 mb-1 truncate" title={q.answer_media_audio_url}>
+                                    ✓ Current audio: {q.answer_media_audio_url.split('/').pop().replace(/^\d+_/, '')}
+                                  </div>
+                                )}
+                                <input
+                                  type="file"
+                                  accept={getAcceptTypes('audio')}
+                                  onChange={(e) => handleQuestionChange(catIdx, qIdx, 'answer_media_audio_file', e.target.files[0])}
+                                  className="w-full bg-white/5 rounded-lg p-2 text-sm text-white focus:outline-none focus:border focus:border-jeopardy-gold block file:mr-4 file:py-1 file:px-3 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-jeopardy-gold file:text-jeopardy-dark hover:file:bg-yellow-400"
+                                />
+                              </div>
+                            </div>
+                          )}
+                          {(q.answer_media_type && q.answer_media_type !== 'none' && q.answer_media_type !== 'image_audio') && (
                             <div className="mb-2">
                               {q.answer_media_url && !q.answer_media_file && (
                                 <div className="text-xs text-green-400 mb-1 truncate" title={q.answer_media_url}>

@@ -34,18 +34,19 @@ type Category struct {
 }
 
 type Question struct {
-	ID              uint   `json:"id" gorm:"primaryKey"`
-	CategoryID      uint   `json:"category_id"`
-	Tier            int    `json:"tier"` // Row index (0, 1, 2...)
-	PointValue      int    `json:"point_value"`
-	Clue            string `json:"clue"`
-	MediaType       string `json:"media_type"` // none, image, audio, video, image_audio
-	MediaURL        string `json:"media_url"`
-	MediaAudioURL   string `json:"media_audio_url"`
-	Options         string `json:"options"` // JSON array of multiple choice options, e.g. '["A","B","C"]'
-	Answer          string `json:"answer"`
-	AnswerMediaType string `json:"answer_media_type"` // none, image, video
-	AnswerMediaURL  string `json:"answer_media_url"`
+	ID                  uint   `json:"id" gorm:"primaryKey"`
+	CategoryID          uint   `json:"category_id"`
+	Tier                int    `json:"tier"` // Row index (0, 1, 2...)
+	PointValue          int    `json:"point_value"`
+	Clue                string `json:"clue"`
+	MediaType           string `json:"media_type"` // none, image, audio, video, image_audio
+	MediaURL            string `json:"media_url"`
+	MediaAudioURL       string `json:"media_audio_url"`
+	Options             string `json:"options"` // JSON array of multiple choice options, e.g. '["A","B","C"]'
+	Answer              string `json:"answer"`
+	AnswerMediaType     string `json:"answer_media_type"` // none, image, audio, video, image_audio
+	AnswerMediaURL      string `json:"answer_media_url"`
+	AnswerMediaAudioURL string `json:"answer_media_audio_url"`
 }
 
 type PlaySession struct {
